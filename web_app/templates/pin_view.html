@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ item.seo_title }} | 4K Ultra HD PFP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>{{ item.seo_title }} | 4K Ultra HD Download</title>
   
   <!-- SEO & Social OpenGraph -->
   <meta name="description" content="{{ item.seo_description }}">
@@ -11,162 +11,185 @@
   <meta property="og:description" content="{{ item.seo_description }}">
   <meta property="og:image" content="{{ item.cdn_url or (site_url ~ '/media/' ~ item.file_path) }}">
   <meta property="og:type" content="article">
+  <meta name="theme-color" content="#07090e">
 
   <link rel="stylesheet" href="/static/style.css">
 
-  <!-- MONETAG ALL-IN-ONE ADS SCRIPTS -->
-  {{ monetag_script_tag | safe }}
+  <!-- MONETAG OFFICIAL AD TAG -->
+  <script src="https://quge5.com/88/tag.min.js" data-zone="305803" async data-cfasync="false"></script>
+
+  <!-- DYNAMIC MONETAG SCRIPTS (From Env if provided) -->
+  {% if monetag_script_tag %}
+    {{ monetag_script_tag | safe }}
+  {% endif %}
 </head>
 <body>
 
   <!-- Top Navigation -->
   <header class="navbar">
     <a href="/" class="logo">
-      ⚡ <span>NOX</span> PFP HUB
+      <span>⚡</span> NOX <span class="logo-badge">PFP HUB</span>
     </a>
-    <span class="badge-uhd">💎 Original 4K UHD</span>
+    <div class="nav-badges">
+      <span class="badge-pill">💎 4K UHD</span>
+    </div>
   </header>
 
   <!-- Main Content -->
   <main class="main-content">
     
-    <!-- Top Ad Placement -->
+    <!-- Sponsored Ad Slot Top -->
     <div class="ad-slot">
-      <!-- Monetag Banner / In-Page Push Area -->
-      <span>Sponsored Advertisement</span>
+      <span>Sponsored Content • Ultra HD Wallpapers</span>
     </div>
 
-    <!-- Media Card -->
-    <div class="pin-card">
-      <div class="media-wrapper">
+    <!-- Main Aesthetic Card -->
+    <article class="pin-card">
+      
+      <!-- Media Preview Area -->
+      <div class="media-container">
+        <span class="image-overlay-badge">
+          <span>✨</span> Ultra HD (Original)
+        </span>
         {% if item.media_type == 'video' %}
-          <video controls autoplay muted loop playsinline>
+          <video controls autoplay muted loop playsinline poster="{{ item.cdn_url }}">
             <source src="{{ item.cdn_url or ('/media/' ~ item.file_path) }}" type="video/mp4">
             Your browser does not support HTML5 video.
           </video>
         {% else %}
-          <img src="{{ item.cdn_url or ('/media/' ~ item.file_path) }}" alt="{{ item.seo_title }}" loading="eager">
+          <img src="{{ item.cdn_url or ('/media/' ~ item.file_path) }}" 
+               alt="{{ item.seo_title }}" 
+               loading="eager" 
+               decoding="async">
         {% endif %}
       </div>
 
-      <div class="card-details">
+      <!-- Card Details & Actions -->
+      <div class="card-body">
+        
         <h1 class="card-title">{{ item.seo_title }}</h1>
         
-        <div class="card-meta">
-          <span>📅 Updated Today</span>
-          <span>👁️ {{ item.views_count + 1 }} Views</span>
-          <span>⬇️ {{ item.downloads_count }} Downloads</span>
+        <div class="card-stats-row">
+          <span class="stat-item">✨ Verified Resolution: <b>4K Original</b></span>
+          <span class="stat-item">👁️ <b>{{ item.views_count + 1 }}</b> views</span>
+          <span class="stat-item">⬇️ <b>{{ item.downloads_count }}</b> downloads</span>
         </div>
 
         <p class="card-desc">{{ item.seo_description }}</p>
 
-        <!-- Timer & Download Box -->
-        <div class="download-action-box">
-          <div class="timer-box" id="timerBox">
-            <div class="timer-label">⚡ Generating High-Speed 4K Ultra HD Download Link...</div>
-            <div class="timer-countdown" id="countdown">{{ timer_seconds }}s</div>
-            <div class="progress-bar">
-              <div class="progress-fill" id="progressFill"></div>
+        <!-- Download Action Panel -->
+        <div class="action-panel">
+          
+          <div class="timer-section" id="timerBox">
+            <div class="timer-status-text">
+              <span>⚡</span> Generating High-Speed Direct Download Link...
+            </div>
+            <div class="timer-digits" id="countdown">{{ timer_seconds }}s</div>
+            <div class="progress-track">
+              <div class="progress-bar-fill" id="progressFill"></div>
             </div>
           </div>
 
-          <!-- Download Button -->
-          <button id="downloadBtn" class="btn-download btn-disabled" disabled>
-            ⏳ Please wait ({{ timer_seconds }}s)
+          <!-- Download Action Button -->
+          <button id="downloadBtn" class="btn-cta btn-disabled" disabled>
+            ⏳ Generating 4K Link ({{ timer_seconds }}s)...
           </button>
+
+          <div class="sub-guarantee">
+            🔒 100% Virus-Free • Original High-Dynamic Range (HDR)
+          </div>
+
         </div>
 
-        <!-- Tags -->
+        <!-- Tags Cloud -->
         {% if item.seo_tags %}
-        <div class="tags-box">
+        <div class="tags-cloud">
           {% for tag in item.seo_tags.split(' ') %}
             {% if tag %}
-              <span class="tag-pill">{{ tag }}</span>
+              <span class="tag-badge">{{ tag }}</span>
             {% endif %}
           {% endfor %}
         </div>
         {% endif %}
 
       </div>
-    </div>
 
-    <!-- Bottom Ad Placement -->
+    </article>
+
+    <!-- Sponsored Ad Slot Bottom -->
     <div class="ad-slot">
-      <span>Sponsored Content</span>
+      <span>Advertisement</span>
     </div>
 
   </main>
 
   <footer>
-    <p>© {{ now_year }} NOX PFP Automation • Ultra HD Profile Pictures & Wallpapers. Free for personal use.</p>
+    <p>© {{ now_year }} NOX PFP Hub • Ultra HD Profile Pictures & Wallpapers</p>
   </footer>
 
-  <!-- Script for 9-Second Timer + Monetag Direct Link Trigger -->
+  <!-- Scripts: Monetag Service Worker + Timer + Dual Download Trigger -->
   <script>
-    // Register Monetag Service Worker for Push Notifications
+    // 1. Register Monetag Service Worker for Push Notifications
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js', { scope: '/' })
-        .then(() => console.log('Monetag Service Worker Registered'))
-        .catch(err => console.log('SW registration error:', err));
+        .catch(err => console.log('SW register info:', err));
     }
 
-    const INITIAL_SECONDS = {{ timer_seconds }};
-    let remainingSeconds = INITIAL_SECONDS;
+    // 2. High Precision Countdown Timer
+    const TOTAL_TIME = {{ timer_seconds }};
+    let timeLeft = TOTAL_TIME;
     const countdownEl = document.getElementById('countdown');
     const progressFill = document.getElementById('progressFill');
     const downloadBtn = document.getElementById('downloadBtn');
-    const timerBox = document.getElementById('timerBox');
-    
-    // Direct link from Monetag & actual file download endpoint
-    const MONETAG_DIRECT_LINK = "{{ monetag_direct_link }}";
-    const FILE_DOWNLOAD_URL = "/download/{{ item.id }}";
 
-    const countdownInterval = setInterval(() => {
-      remainingSeconds--;
+    const DIRECT_AD_LINK = "{{ monetag_direct_link }}";
+    const FILE_URL = "/download/{{ item.id }}";
+
+    const timer = setInterval(() => {
+      timeLeft--;
       
-      if (remainingSeconds > 0) {
-        countdownEl.innerText = remainingSeconds + 's';
-        downloadBtn.innerText = '⏳ Generating Link (' + remainingSeconds + 's)...';
-        const percentage = ((INITIAL_SECONDS - remainingSeconds) / INITIAL_SECONDS) * 100;
-        progressFill.style.width = percentage + '%';
+      if (timeLeft > 0) {
+        countdownEl.innerText = timeLeft + 's';
+        downloadBtn.innerText = '⏳ Generating Link (' + timeLeft + 's)...';
+        const percent = ((TOTAL_TIME - timeLeft) / TOTAL_TIME) * 100;
+        progressFill.style.width = percent + '%';
       } else {
-        clearInterval(countdownInterval);
+        clearInterval(timer);
         progressFill.style.width = '100%';
         countdownEl.innerText = 'Ready!';
-        countdownEl.style.color = '#00e676';
+        countdownEl.style.color = '#10b981';
         
-        // Activate Button
+        // Transform button to glowing ready CTA
         downloadBtn.disabled = false;
-        downloadBtn.className = 'btn-download btn-active';
-        downloadBtn.innerHTML = '⬇️ Download Ultra HD (Original File)';
+        downloadBtn.className = 'btn-cta btn-ready';
+        downloadBtn.innerHTML = '⬇️ Download 4K Ultra HD (Original)';
       }
     }, 1000);
 
-    // On Click: trigger both file download & Monetag direct link in new tab
+    // 3. Dual-Trigger Click Listener
     downloadBtn.addEventListener('click', () => {
       if (downloadBtn.disabled) return;
 
-      // 1. Open Monetag Ad link in a new background/active tab
-      if (MONETAG_DIRECT_LINK && MONETAG_DIRECT_LINK.startsWith("http")) {
-        window.open(MONETAG_DIRECT_LINK, '_blank');
+      // Trigger Monetag direct link in active/new tab
+      if (DIRECT_AD_LINK && DIRECT_AD_LINK.startsWith("http")) {
+        window.open(DIRECT_AD_LINK, '_blank');
       }
 
-      // 2. Trigger instant direct download of the image/video
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.href = FILE_DOWNLOAD_URL;
-      downloadAnchor.setAttribute('download', '{{ item.original_filename }}');
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      document.body.removeChild(downloadAnchor);
+      // Trigger immediate file download in browser
+      const dlLink = document.createElement('a');
+      dlLink.href = FILE_URL;
+      dlLink.setAttribute('download', '{{ item.original_filename or "wallpaper.jpg" }}');
+      document.body.appendChild(dlLink);
+      dlLink.click();
+      document.body.removeChild(dlLink);
 
-      // Button feedback
+      // Feedback button state
       downloadBtn.innerHTML = '✅ Download Started!';
       setTimeout(() => {
-        downloadBtn.innerHTML = '⬇️ Download Again (Ultra HD)';
-      }, 4000);
+        downloadBtn.innerHTML = '⬇️ Download Again (4K UHD)';
+      }, 3500);
     });
   </script>
 
 </body>
 </html>
-

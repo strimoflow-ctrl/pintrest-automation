@@ -31,7 +31,9 @@ dist/
 *.egg-info/
 *.zip
 
-# OS files
+# OS & Log files
 .DS_Store
 Thumbs.db
+*.log
+render logs
 

@@ -50,6 +50,11 @@ async def background_automation_loop():
             else:
                 print("[*] Queue empty. Auto-scraping new batch from Telegram...")
                 scrape_telegram_web(max_items=25)
+                # Post first pin immediately from newly scraped batch
+                fresh_item = database.get_next_unposted_item()
+                if fresh_item:
+                    print(f"[*] Posting fresh item #{fresh_item['id']} to Pinterest immediately...")
+                    post_single_item(fresh_item)
         except Exception as e:
             print(f"[-] Background worker error: {e}")
             

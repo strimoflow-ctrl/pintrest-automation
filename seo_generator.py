@@ -1,18 +1,16 @@
 import random
 import re
 
-# High-converting Pinterest Title templates categorized by vibes
+# High-converting Pinterest Title templates with explicit Visit Site CTAs
 TITLE_TEMPLATES = [
-    "🔥 Aesthetic {subject} PFP | 4K Ultra HD Profile Picture",
-    "✨ {subject} Aesthetic Wallpaper & PFP (Free Ultra HD Download)",
-    "🖤 Dark Aesthetic {subject} Icon | High Resolution Profile Picture",
-    "💎 Cool {subject} Avatar & Wallpaper 4K | Free Download",
-    "🌟 Best {subject} PFP for Discord, Telegram & Insta (Ultra HD)",
-    "⚡ Cyberpunk & Dark {subject} PFP | 4K Aesthetic Wallpaper",
-    "💜 Moody Aesthetic {subject} Profile Picture (Download in 4K)",
-    "🎨 Minimalist & Clean {subject} PFP | Ultra HD 4K Quality",
-    "🌸 Trendy {subject} Aesthetic Profile Picture & Background 4K",
-    "👑 Ultimate {subject} Wallpaper & PFP (Full HD Original)"
+    "🔥 Aesthetic {subject} PFP 4K (Visit Site To Download HD ⬇️)",
+    "✨ {subject} 4K Ultra HD PFP | Download HD - Visit Link ⬇️",
+    "🖤 Dark {subject} PFP & 4K Wallpaper (Visit Site To Download HD)",
+    "💎 Cool {subject} Avatar 4K | Download HD (Visit Site ⬇️)",
+    "⚡ {subject} Aesthetic PFP | Visit Link To Download Ultra HD ⬇️",
+    "🌸 Trendy {subject} PFP 4K (Visit Site To Download HD ⬇️)",
+    "👑 Ultra HD {subject} Wallpaper & PFP | Download HD (Visit Link)",
+    "💜 Moody {subject} 4K Profile Picture (Visit Site To Download HD ⬇️)"
 ]
 
 SUBJECTS = [

@@ -1,17 +1,15 @@
 :root {
   --bg-primary: #07090e;
   --bg-secondary: #0d1117;
-  --card-bg: rgba(18, 22, 31, 0.75);
+  --card-bg: rgba(18, 22, 31, 0.85);
   --card-border: rgba(255, 255, 255, 0.08);
-  --card-border-glow: rgba(0, 210, 255, 0.25);
-  --accent-color: #e60023; /* Pinterest brand */
   --accent-cyan: #00d2ff;
   --accent-green: #10b981;
   --text-primary: #f0f6fc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
   --btn-ready: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  --btn-glow: rgba(16, 185, 129, 0.4);
+  --btn-glow: rgba(16, 185, 129, 0.45);
 }
 
 * {
@@ -24,39 +22,40 @@
 
 body {
   background: var(--bg-primary);
-  background-image: 
-    radial-gradient(circle at 50% 0%, rgba(0, 210, 255, 0.06) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(230, 0, 35, 0.04) 0%, transparent 40%);
   color: var(--text-primary);
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
 }
 
-/* Navbar */
-.navbar {
+/* Single View Specific (Zero-Scroll Body) */
+body.single-view-body {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* ZERO SCROLL */
+}
+
+/* Compact Navbar */
+.navbar-compact {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 24px;
-  background: rgba(7, 9, 14, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  padding: 10px 16px;
+  background: rgba(7, 9, 14, 0.95);
   border-bottom: 1px solid var(--card-border);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  height: 48px;
+  flex-shrink: 0;
 }
 
 .logo {
   font-weight: 800;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   letter-spacing: -0.3px;
   text-decoration: none;
   color: var(--text-primary);
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .logo-badge {
@@ -66,196 +65,126 @@ body {
   font-weight: 900;
 }
 
-.nav-badges {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .badge-pill {
   background: rgba(16, 185, 129, 0.12);
   border: 1px solid rgba(16, 185, 129, 0.3);
   color: #34d399;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 9999px;
-  letter-spacing: 0.3px;
   text-transform: uppercase;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
 }
 
-/* Main Layout */
-.main-content {
+/* Compact Screen Container (Zero Scroll) */
+.compact-screen-container {
   flex: 1;
-  max-width: 680px;
-  width: 100%;
-  margin: 20px auto 40px auto;
-  padding: 0 16px;
-}
-
-/* Ad Placements */
-.ad-slot {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px dashed rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 8px;
-  margin: 14px 0;
-  text-align: center;
-  min-height: 80px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  align-items: center;
+  padding: 8px 12px;
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
 }
 
-/* Single Pin Card */
-.pin-card {
+.compact-card {
+  width: 100%;
+  height: 100%;
+  max-height: calc(100dvh - 60px);
   background: var(--card-bg);
   border: 1px solid var(--card-border);
-  border-radius: 20px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  box-shadow: 
-    0 20px 40px -15px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
-/* Image Container */
-.media-container {
-  position: relative;
-  background: #030407;
+/* Media Preview (Fits cleanly above the fold) */
+.media-preview-box {
+  flex: 1;
+  min-height: 0;
+  background: #020306;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-bottom: 1px solid var(--card-border);
-  min-height: 380px;
-  max-height: 640px;
+  position: relative;
 }
 
-.media-container img, .media-container video {
+.media-preview-box img, .media-preview-box video {
   max-width: 100%;
-  max-height: 640px;
+  max-height: 100%;
   width: auto;
   height: auto;
   object-fit: contain;
   display: block;
-  user-select: none;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.media-container:hover img {
-  transform: scale(1.015);
-}
-
-.image-overlay-badge {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 5px 12px;
-  border-radius: 20px;
+/* Action Panel Directly Below Image */
+.compact-action-panel {
+  flex-shrink: 0;
+  padding: 12px 14px 14px 14px;
+  background: rgba(10, 13, 18, 0.95);
+  border-top: 1px solid var(--card-border);
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  gap: 8px;
 }
 
-/* Content Area */
-.card-body {
-  padding: 24px;
-}
-
-.card-title {
-  font-size: 1.35rem;
-  font-weight: 800;
-  line-height: 1.35;
-  letter-spacing: -0.3px;
-  color: #ffffff;
-  margin-bottom: 12px;
-}
-
-.card-stats-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px;
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.stat-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.card-desc {
-  font-size: 0.92rem;
-  line-height: 1.6;
-  color: #cbd5e1;
-  margin-bottom: 22px;
-}
-
-/* Download & Timer Action Panel */
-.action-panel {
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 22px 18px;
-  text-align: center;
-  margin-top: 10px;
-}
-
-.timer-section {
-  margin-bottom: 16px;
-}
-
-.timer-status-text {
-  font-size: 0.88rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.timer-digits {
-  font-size: 2.4rem;
-  font-weight: 900;
-  color: var(--accent-cyan);
-  text-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
-  letter-spacing: -1px;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  margin: 6px 0;
-}
-
-.progress-track {
+/* Short Title with Ellipsis */
+.compact-title-row {
   width: 100%;
-  max-width: 380px;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.compact-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* ... Truncation */
+  line-height: 1.2;
+}
+
+/* Timer Row */
+.compact-timer-row {
+  width: 100%;
+}
+
+.timer-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.timer-msg {
+  font-weight: 500;
+}
+
+.timer-countdown-badge {
+  font-weight: 800;
+  color: var(--accent-cyan);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.compact-progress-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 99px;
   overflow: hidden;
-  margin: 12px auto 0 auto;
 }
 
-.progress-bar-fill {
+.compact-progress-fill {
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, #3b82f6, var(--accent-cyan));
@@ -263,122 +192,59 @@ body {
   transition: width 1s linear;
 }
 
-/* Download Button */
-.btn-cta {
+/* Download CTA Button */
+.compact-btn-cta {
+  width: 100%;
+  height: 46px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  width: 100%;
-  max-width: 440px;
-  padding: 16px 28px;
-  font-size: 1.05rem;
-  font-weight: 700;
-  border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  border-radius: 10px;
   border: none;
-  cursor: pointer;
   text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   letter-spacing: -0.2px;
+  transition: all 0.25s ease;
 }
 
-.btn-disabled {
+.btn-locked {
   background: rgba(255, 255, 255, 0.06);
   color: #64748b;
   cursor: not-allowed;
-  opacity: 0.8;
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.btn-ready {
+.btn-ready-pulse {
   background: var(--btn-ready);
   color: #ffffff;
-  box-shadow: 0 8px 25px var(--btn-glow);
   cursor: pointer;
-  animation: pulse-cta 2s infinite ease-in-out;
+  box-shadow: 0 4px 20px var(--btn-glow);
+  animation: pulse-ready 2s infinite ease-in-out;
 }
 
-.btn-ready:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 35px rgba(16, 185, 129, 0.6);
+.btn-ready-pulse:active {
+  transform: scale(0.98);
 }
 
-.btn-ready:active {
-  transform: translateY(0);
-}
-
-@keyframes pulse-cta {
+@keyframes pulse-ready {
   0% { transform: scale(1); }
-  50% { transform: scale(1.02); }
+  50% { transform: scale(1.015); }
   100% { transform: scale(1); }
 }
 
-.sub-guarantee {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  margin-top: 12px;
+/* Homepage Gallery Styles */
+.navbar {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
+  padding: 14px 20px;
+  background: rgba(7, 9, 14, 0.9);
+  border-bottom: 1px solid var(--card-border);
 }
 
-/* Tag Pills */
-.tags-cloud {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 22px;
-}
-
-.tag-badge {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--text-secondary);
-  font-size: 0.78rem;
-  font-weight: 500;
-  padding: 5px 12px;
-  border-radius: 20px;
-  transition: all 0.2s;
-  text-decoration: none;
-}
-
-.tag-badge:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-/* Footer */
-footer {
-  text-align: center;
-  padding: 24px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  margin-top: auto;
-}
-
-/* Mobile Responsiveness */
-@media (max-width: 640px) {
-  .main-content {
-    margin-top: 12px;
-    padding: 0 12px;
-  }
-  .card-body {
-    padding: 18px 14px;
-  }
-  .card-title {
-    font-size: 1.18rem;
-  }
-  .timer-digits {
-    font-size: 2rem;
-  }
-  .btn-cta {
-    padding: 14px 20px;
-    font-size: 0.98rem;
-  }
-  .media-container {
-    max-height: 480px;
-  }
+.main-content {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 0 16px;
 }

@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <title>{{ item.seo_title }} | 4K Ultra HD Download</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{{ item.seo_title }}</title>
   
-  <!-- SEO & Social OpenGraph -->
+  <!-- SEO OpenGraph for Social & Pinterest Crawlers -->
   <meta name="description" content="{{ item.seo_description }}">
   <meta property="og:title" content="{{ item.seo_title }}">
   <meta property="og:description" content="{{ item.seo_description }}">
@@ -18,43 +18,30 @@
   <!-- MONETAG OFFICIAL AD TAG -->
   <script src="https://quge5.com/88/tag.min.js" data-zone="305803" async data-cfasync="false"></script>
 
-  <!-- DYNAMIC MONETAG SCRIPTS (From Env if provided) -->
   {% if monetag_script_tag %}
     {{ monetag_script_tag | safe }}
   {% endif %}
 </head>
-<body>
+<body class="single-view-body">
 
-  <!-- Top Navigation -->
-  <header class="navbar">
+  <!-- Minimal Header -->
+  <header class="navbar-compact">
     <a href="/" class="logo">
       <span>⚡</span> NOX <span class="logo-badge">PFP HUB</span>
     </a>
-    <div class="nav-badges">
-      <span class="badge-pill">💎 4K UHD</span>
-    </div>
+    <span class="badge-pill">💎 4K ULTRA HD</span>
   </header>
 
-  <!-- Main Content -->
-  <main class="main-content">
+  <!-- Main Viewport (Zero Scroll, Fits 100% On Mobile Screen) -->
+  <main class="compact-screen-container">
     
-    <!-- Sponsored Ad Slot Top -->
-    <div class="ad-slot">
-      <span>Sponsored Content • Ultra HD Wallpapers</span>
-    </div>
-
-    <!-- Main Aesthetic Card -->
-    <article class="pin-card">
+    <div class="compact-card">
       
-      <!-- Media Preview Area -->
-      <div class="media-container">
-        <span class="image-overlay-badge">
-          <span>✨</span> Ultra HD (Original)
-        </span>
+      <!-- Media Preview Frame -->
+      <div class="media-preview-box">
         {% if item.media_type == 'video' %}
           <video controls autoplay muted loop playsinline poster="{{ item.cdn_url }}">
             <source src="{{ item.cdn_url or ('/media/' ~ item.file_path) }}" type="video/mp4">
-            Your browser does not support HTML5 video.
           </video>
         {% else %}
           <img src="{{ item.cdn_url or ('/media/' ~ item.file_path) }}" 
@@ -64,126 +51,90 @@
         {% endif %}
       </div>
 
-      <!-- Card Details & Actions -->
-      <div class="card-body">
+      <!-- Action Footer with Truncated Title & Direct Download -->
+      <div class="compact-action-panel">
         
-        <h1 class="card-title">{{ item.seo_title }}</h1>
-        
-        <div class="card-stats-row">
-          <span class="stat-item">✨ Verified Resolution: <b>4K Original</b></span>
-          <span class="stat-item">👁️ <b>{{ item.views_count + 1 }}</b> views</span>
-          <span class="stat-item">⬇️ <b>{{ item.downloads_count }}</b> downloads</span>
+        <!-- Short Title with Ellipsis -->
+        <div class="compact-title-row">
+          <h1 class="compact-title" title="{{ item.seo_title }}">{{ item.seo_title }}</h1>
         </div>
 
-        <p class="card-desc">{{ item.seo_description }}</p>
-
-        <!-- Download Action Panel -->
-        <div class="action-panel">
-          
-          <div class="timer-section" id="timerBox">
-            <div class="timer-status-text">
-              <span>⚡</span> Generating High-Speed Direct Download Link...
-            </div>
-            <div class="timer-digits" id="countdown">{{ timer_seconds }}s</div>
-            <div class="progress-track">
-              <div class="progress-bar-fill" id="progressFill"></div>
-            </div>
+        <!-- 9s Countdown Timer & Progress -->
+        <div class="compact-timer-row" id="timerRow">
+          <div class="timer-flex">
+            <span class="timer-msg">⚡ Generating Direct Download Link...</span>
+            <span class="timer-countdown-badge" id="countdown">{{ timer_seconds }}s</span>
           </div>
-
-          <!-- Download Action Button -->
-          <button id="downloadBtn" class="btn-cta btn-disabled" disabled>
-            ⏳ Generating 4K Link ({{ timer_seconds }}s)...
-          </button>
-
-          <div class="sub-guarantee">
-            🔒 100% Virus-Free • Original High-Dynamic Range (HDR)
+          <div class="compact-progress-track">
+            <div class="compact-progress-fill" id="progressFill"></div>
           </div>
-
         </div>
 
-        <!-- Tags Cloud -->
-        {% if item.seo_tags %}
-        <div class="tags-cloud">
-          {% for tag in item.seo_tags.split(' ') %}
-            {% if tag %}
-              <span class="tag-badge">{{ tag }}</span>
-            {% endif %}
-          {% endfor %}
-        </div>
-        {% endif %}
+        <!-- Download CTA Button (Dual Trigger) -->
+        <button id="downloadBtn" class="compact-btn-cta btn-locked" disabled>
+          ⏳ Please wait ({{ timer_seconds }}s)...
+        </button>
 
       </div>
 
-    </article>
-
-    <!-- Sponsored Ad Slot Bottom -->
-    <div class="ad-slot">
-      <span>Advertisement</span>
     </div>
 
   </main>
 
-  <footer>
-    <p>© {{ now_year }} NOX PFP Hub • Ultra HD Profile Pictures & Wallpapers</p>
-  </footer>
-
-  <!-- Scripts: Monetag Service Worker + Timer + Dual Download Trigger -->
+  <!-- Service Worker & Dual Download Scripts -->
   <script>
-    // 1. Register Monetag Service Worker for Push Notifications
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js', { scope: '/' })
         .catch(err => console.log('SW register info:', err));
     }
 
-    // 2. High Precision Countdown Timer
-    const TOTAL_TIME = {{ timer_seconds }};
-    let timeLeft = TOTAL_TIME;
+    const TOTAL_SECONDS = {{ timer_seconds }};
+    let remaining = TOTAL_SECONDS;
     const countdownEl = document.getElementById('countdown');
     const progressFill = document.getElementById('progressFill');
     const downloadBtn = document.getElementById('downloadBtn');
+    const timerRow = document.getElementById('timerRow');
 
     const DIRECT_AD_LINK = "{{ monetag_direct_link }}";
     const FILE_URL = "/download/{{ item.id }}";
 
-    const timer = setInterval(() => {
-      timeLeft--;
+    const countdownInterval = setInterval(() => {
+      remaining--;
       
-      if (timeLeft > 0) {
-        countdownEl.innerText = timeLeft + 's';
-        downloadBtn.innerText = '⏳ Generating Link (' + timeLeft + 's)...';
-        const percent = ((TOTAL_TIME - timeLeft) / TOTAL_TIME) * 100;
+      if (remaining > 0) {
+        countdownEl.innerText = remaining + 's';
+        downloadBtn.innerText = '⏳ Generating Link (' + remaining + 's)...';
+        const percent = ((TOTAL_SECONDS - remaining) / TOTAL_SECONDS) * 100;
         progressFill.style.width = percent + '%';
       } else {
-        clearInterval(timer);
+        clearInterval(countdownInterval);
         progressFill.style.width = '100%';
         countdownEl.innerText = 'Ready!';
         countdownEl.style.color = '#10b981';
         
-        // Transform button to glowing ready CTA
+        // Transform button to active pulsing CTA
         downloadBtn.disabled = false;
-        downloadBtn.className = 'btn-cta btn-ready';
-        downloadBtn.innerHTML = '⬇️ Download 4K Ultra HD (Original)';
+        downloadBtn.className = 'compact-btn-cta btn-ready-pulse';
+        downloadBtn.innerHTML = '⬇️ Download Ultra HD (Original File)';
       }
     }, 1000);
 
-    // 3. Dual-Trigger Click Listener
     downloadBtn.addEventListener('click', () => {
       if (downloadBtn.disabled) return;
 
-      // Trigger Monetag direct link in active/new tab
+      // 1. Open Monetag direct link in new tab
       if (DIRECT_AD_LINK && DIRECT_AD_LINK.startsWith("http")) {
         window.open(DIRECT_AD_LINK, '_blank');
       }
 
-      // Trigger immediate file download in browser
-      const dlLink = document.createElement('a');
-      dlLink.href = FILE_URL;
-      dlLink.setAttribute('download', '{{ item.original_filename or "wallpaper.jpg" }}');
-      document.body.appendChild(dlLink);
-      dlLink.click();
-      document.body.removeChild(dlLink);
+      // 2. Direct browser download of original image
+      const a = document.createElement('a');
+      a.href = FILE_URL;
+      a.setAttribute('download', '{{ item.original_filename or "wallpaper.jpg" }}');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
 
-      // Feedback button state
       downloadBtn.innerHTML = '✅ Download Started!';
       setTimeout(() => {
         downloadBtn.innerHTML = '⬇️ Download Again (4K UHD)';

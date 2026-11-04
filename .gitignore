@@ -1,0 +1,37 @@
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# Telegram sessions & auth
+*.session
+*.session-journal
+bot_session.session
+telegram_session.session
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+pins_database.db
+
+# Downloaded media files
+media/*
+!media/.gitkeep
+
+# Python cache & compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.zip
+
+# OS files
+.DS_Store
+Thumbs.db
+

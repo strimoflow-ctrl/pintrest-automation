@@ -14,6 +14,7 @@ if sys.platform.startswith("win"):
 from config import TELEGRAM_CHANNEL, MEDIA_DIR
 import database
 import seo_generator
+import firebase_db
 from notifier import send_telegram_notification
 
 HEADERS = {
@@ -46,6 +47,10 @@ def scrape_telegram_web(channel: str = TELEGRAM_CHANNEL, max_items: int = 50):
     saved_count = 0
     skipped_count = 0
     before_id = None
+
+    # Load all already posted pins from Firebase (permanent cloud record)
+    posted_in_firebase = firebase_db.get_posted_ids()
+    print(f"[*] Loaded {len(posted_in_firebase)} previously posted pins from Firebase.")
 
     while saved_count < max_items:
         fetch_url = f"{base_url}?before={before_id}" if before_id else base_url
@@ -84,7 +89,12 @@ def scrape_telegram_web(channel: str = TELEGRAM_CHANNEL, max_items: int = 50):
             if first_msg_id is None or msg_id < first_msg_id:
                 first_msg_id = msg_id
 
-            # Check if already scraped
+            # Check if already posted in Firebase (permanent cloud check)
+            if str(msg_id) in posted_in_firebase:
+                skipped_count += 1
+                continue
+
+            # Check if already scraped in local DB
             conn = database.get_db()
             cursor = conn.cursor()
             cursor.execute("SELECT id FROM media_items WHERE telegram_msg_id = ?", (msg_id,))
@@ -180,10 +190,9 @@ def scrape_telegram_web(channel: str = TELEGRAM_CHANNEL, max_items: int = 50):
     if saved_count > 0:
         msg = (
             f"📥 <b>Telegram Media Scraped!</b>\n\n"
-            f"• Newly Saved: <b>+{saved_count} items</b>\n"
-            f"• Total Media in DB: <b>{stats['total_media']}</b>\n"
-            f"• Queue Pending: <b>{stats['pending_pins']}</b>\n"
-            f"• Source: <code>t.me/{channel}</code>\n\n"
+            f"• <b>New Wallpapers Added:</b> +{saved_count}\n"
+            f"• <b>In Queue Ready to Post:</b> {stats['pending_pins']}\n"
+            f"• <b>Source:</b> <code>t.me/{channel}</code>\n\n"
             f"⚡ <i>Auto-Scraper Active</i>"
         )
         send_telegram_notification(msg)

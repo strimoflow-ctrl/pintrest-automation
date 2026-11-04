@@ -10,6 +10,9 @@ def get_int_env(key: str, default: int = 0) -> int:
     val = os.getenv(key, "").strip()
     return int(val) if val.isdigit() else default
 
+# ================= FIREBASE RTDB CONFIG =================
+FIREBASE_DB_URL = os.getenv("FIREBASE_DB_URL", "https://secret-gpt-default-rtdb.asia-southeast1.firebasedatabase.app").strip()
+
 # ================= TELEGRAM CONFIG =================
 TELEGRAM_API_ID = get_int_env("TELEGRAM_API_ID", 0)
 TELEGRAM_API_HASH = os.getenv("TELEGRAM_API_HASH", "").strip()

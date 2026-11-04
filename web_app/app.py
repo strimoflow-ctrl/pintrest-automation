@@ -14,6 +14,7 @@ sys.path.append(str(BASE_DIR))
 
 import config
 import database
+import firebase_db
 
 app = FastAPI(title="NOX PFP Landing & Monetag Hub")
 
@@ -113,8 +114,9 @@ async def view_pin_page(request: Request, item_id: int):
     if not item:
         raise HTTPException(status_code=404, detail="Wallpapers/PFP not found")
         
-    # Increment views counter
+    # Increment views counter locally and in Firebase
     database.increment_views(item_id)
+    firebase_db.increment_firebase_views()
     
     return templates.TemplateResponse(request, "pin_view.html", {
         "item": item,
@@ -131,8 +133,9 @@ async def download_media(item_id: int):
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    # Increment downloads counter
+    # Increment downloads counter locally and in Firebase
     database.increment_downloads(item_id)
+    firebase_db.increment_firebase_downloads()
 
     file_path = config.MEDIA_DIR / item["file_path"]
     if file_path.exists():

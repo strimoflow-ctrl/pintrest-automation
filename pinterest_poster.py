@@ -15,6 +15,7 @@ from config import (
     SITE_BASE_URL, FALLBACK_LANDING_URL, MEDIA_DIR, POST_INTERVAL_MINUTES
 )
 import database
+import firebase_db
 from notifier import send_telegram_notification
 
 DEFAULT_BOARD_ID = PINTEREST_BOARD_ID
@@ -99,9 +100,14 @@ class PinterestSessionPoster:
 
 def post_single_item(item: dict, board_id: str = DEFAULT_BOARD_ID) -> bool:
     item_id = item["id"]
-    
-    # Destination link for the Pin
-    # Pinterest requires a valid public web link (not localhost)
+    msg_id = item.get("telegram_msg_id")
+
+    # Cloud Persistence: If already posted in Firebase, skip permanently
+    if msg_id and firebase_db.is_pin_posted(msg_id):
+        print(f"[*] Item #{item_id} (msg #{msg_id}) already in Firebase. Skipping duplicate.")
+        database.mark_item_posted(item_id, "already_posted")
+        return False
+
     base = SITE_BASE_URL.rstrip('/') if SITE_BASE_URL else ""
     if not base or "localhost" in base or not base.startswith("http"):
         base = "https://pintrest-automation.onrender.com"
@@ -128,21 +134,23 @@ def post_single_item(item: dict, board_id: str = DEFAULT_BOARD_ID) -> bool:
         pin_id = result["pin_id"]
         pin_url = result["url"]
         database.mark_item_posted(item_id, pin_id)
+
+        # Permanently record in Firebase RTDB
+        if msg_id:
+            firebase_db.record_posted_pin(msg_id, pin_id, item["seo_title"], landing_url)
+
         stats = database.get_stats()
+        fb_stats = firebase_db.get_firebase_stats()
+        total_uploaded = fb_stats.get("total_posted", stats["posted_pins"])
         print(f"[✓] Pin #{item_id} successfully created on Pinterest! URL: {pin_url}")
 
-        # Send Detailed Telegram Bot Notification to Owner
+        # Send Clean & Elegant Telegram Bot Notification to Owner
         notif_msg = (
-            f"✅ <b>Pinterest Pin Uploaded Successfully!</b>\n\n"
+            f"✅ <b>Pinterest Pin Uploaded!</b>\n\n"
             f"🏷️ <b>Title:</b> {item['seo_title']}\n"
-            f"📌 <b>Pinterest Pin:</b> <a href=\"{pin_url}\">{pin_url}</a>\n"
-            f"🌐 <b>Landing Page:</b> <a href=\"{landing_url}\">{landing_url}</a>\n\n"
-            f"📊 <b>Live System Stats:</b>\n"
-            f"• 📌 Total Posted Pins: <b>{stats['posted_pins']}</b>\n"
-            f"• ⏳ Remaining in Queue: <b>{stats['pending_pins']}</b>\n"
-            f"• 📦 Total Scraped Media: <b>{stats['total_media']}</b>\n"
-            f"• 👁️ Landing Views: <b>{stats['total_views']}</b>\n"
-            f"• ⬇️ Downloads: <b>{stats['total_downloads']}</b>\n\n"
+            f"📌 <b>Pin:</b> <a href=\"{pin_url}\">{pin_url}</a>\n"
+            f"🌐 <b>Landing:</b> <a href=\"{landing_url}\">{landing_url}</a>\n\n"
+            f"📊 <b>Progress:</b> Total Uploaded: <b>{total_uploaded}</b> | In Queue: <b>{stats['pending_pins']}</b>\n\n"
             f"⚡ <i>Auto-posted via NOX Automation</i>"
         )
         send_telegram_notification(notif_msg)
@@ -153,14 +161,12 @@ def post_single_item(item: dict, board_id: str = DEFAULT_BOARD_ID) -> bool:
         database.mark_item_error(item_id, err)
         stats = database.get_stats()
         
-        # Send Detailed Error Alert to Owner
+        # Send Clean Error Alert to Owner
         err_msg = (
             f"❌ <b>Pinterest Pin Upload Failed!</b>\n\n"
             f"🏷️ <b>Title:</b> {item['seo_title']}\n"
-            f"⚠️ <b>Error Reason:</b> <code>{err}</code>\n\n"
-            f"📊 <b>Queue Status:</b>\n"
-            f"• 📌 Uploaded so far: <b>{stats['posted_pins']}</b>\n"
-            f"• ⏳ Pending in Queue: <b>{stats['pending_pins']}</b>\n\n"
+            f"⚠️ <b>Error:</b> <code>{err}</code>\n\n"
+            f"📊 <b>Queue:</b> {stats['pending_pins']} remaining\n\n"
             f"⚡ <i>Worker will retry next scheduled interval.</i>"
         )
         send_telegram_notification(err_msg)

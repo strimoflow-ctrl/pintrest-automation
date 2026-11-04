@@ -102,15 +102,18 @@ def post_single_item(item: dict, board_id: str = DEFAULT_BOARD_ID) -> bool:
     
     # Destination link for the Pin
     # Pinterest requires a valid public web link (not localhost)
-    if SITE_BASE_URL and SITE_BASE_URL.startswith("http") and "localhost" not in SITE_BASE_URL:
-        landing_url = f"{SITE_BASE_URL}/p/{item_id}"
-        image_url = f"{SITE_BASE_URL}/media/{item['file_path']}"
-    elif FALLBACK_LANDING_URL and FALLBACK_LANDING_URL.startswith("http"):
-        landing_url = f"{FALLBACK_LANDING_URL}?pfp={item_id}"
-        image_url = f"https://picsum.photos/seed/{item_id}/800/1200"
+    base = SITE_BASE_URL.rstrip('/') if SITE_BASE_URL else ""
+    if not base or "localhost" in base or not base.startswith("http"):
+        base = "https://pintrest-automation.onrender.com"
+        
+    # Exactly target the individual pin landing page
+    landing_url = f"{base}/p/{item_id}"
+
+    # Use direct Telegram CDN for image source (saves 100% Render server bandwidth)
+    if item.get("cdn_url") and item["cdn_url"].startswith("http"):
+        image_url = item["cdn_url"]
     else:
-        landing_url = "https://pinterest.com"
-        image_url = f"https://picsum.photos/seed/{item_id}/800/1200"
+        image_url = f"{base}/media/{item['file_path']}"
 
     poster = PinterestSessionPoster(PINTEREST_SESSION)
     result = poster.create_pin(

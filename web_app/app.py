@@ -99,12 +99,12 @@ async def health_check():
 
 @app.get("/", response_class=HTMLResponse)
 async def index_page(request: Request):
-    items = database.get_recent_items(limit=36)
-    stats = database.get_stats()
+    """
+    Lightweight branded status page for Cryvex Automation.
+    Zero image bandwidth, zero heavy queries!
+    """
     return templates.TemplateResponse(request, "index.html", {
-        "items": items,
-        "stats": stats,
-        "monetag_script_tag": config.MONETAG_SCRIPT_TAG
+        "year": datetime.now().year
     })
 
 @app.get("/p/{item_id}", response_class=HTMLResponse)

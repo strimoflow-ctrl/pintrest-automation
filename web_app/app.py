@@ -69,6 +69,18 @@ async def head_root():
     """Handles HEAD requests for Uptime monitors (UptimeRobot, BetterUptime, etc.)"""
     return HTMLResponse(content="", status_code=200)
 
+@app.get("/sw.js")
+async def service_worker():
+    """Serves Monetag Push Notification Service Worker at root /sw.js"""
+    sw_file = BASE_DIR / "sw.js"
+    if sw_file.exists():
+        return FileResponse(
+            path=str(sw_file),
+            media_type="application/javascript",
+            headers={"Service-Worker-Allowed": "/"}
+        )
+    raise HTTPException(status_code=404, detail="sw.js not found")
+
 @app.get("/health")
 @app.head("/health")
 async def health_check():

@@ -128,6 +128,11 @@
     <p>© 2026 NOX PFP Automation • All High Resolution Assets</p>
   </footer>
 
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    }
+  </script>
 </body>
 </html>
 

@@ -103,6 +103,13 @@
 
   <!-- Script for 9-Second Timer + Monetag Direct Link Trigger -->
   <script>
+    // Register Monetag Service Worker for Push Notifications
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .then(() => console.log('Monetag Service Worker Registered'))
+        .catch(err => console.log('SW registration error:', err));
+    }
+
     const INITIAL_SECONDS = {{ timer_seconds }};
     let remainingSeconds = INITIAL_SECONDS;
     const countdownEl = document.getElementById('countdown');

@@ -63,11 +63,70 @@ async def background_automation_loop():
         print(f"[*] Sleeping {config.POST_INTERVAL_MINUTES} minutes until next scheduled pin...")
         await asyncio.sleep(sleep_secs)
 
+async def viral_background_loop():
+    """
+    Background worker that runs inside Render:
+    - Automatically checks and ensures 4 target boards on new Pinterest account
+    - Scrapes fresh viral images on-demand from source boards
+    - Auto-posts pins with 5-click video player landing URLs
+    - Sends notifications to the same Telegram bot!
+    """
+    import asyncio
+    from viral_engine import PinterestViralClient, post_next_viral_pin, scrape_fresh_viral_batch
+    from notifier import send_telegram_notification
+    
+    await asyncio.sleep(25)
+    print("[*] Viral 18+ Clickbait Background Worker Active!")
+    
+    session_cookie = config.VIRAL_PINTEREST_SESSION
+    username = config.VIRAL_PINTEREST_USERNAME
+    
+    if not session_cookie:
+        print("[-] VIRAL_PINTEREST_SESSION is not configured in .env. Viral worker waiting...")
+        return
+        
+    poster = PinterestViralClient(session_cookie, username)
+    loop = asyncio.get_event_loop()
+    
+    try:
+        board_ids = await loop.run_in_executor(None, poster.ensure_viral_boards)
+        print(f"[✓] Viral Worker Boards Pool: {board_ids}")
+        send_telegram_notification(
+            "🚀 <b>Viral 18+ Pinterest Bot Connected!</b>\n\n"
+            f"🎯 <b>Status:</b> Active on Render Server\n"
+            f"📁 <b>Target Boards:</b> {len(board_ids)} Boards Active\n"
+            f"⚡ <i>Auto-posting with 5-Click Video Player Gate every {config.VIRAL_POST_INTERVAL_MINUTES}m</i>"
+        )
+    except Exception as e:
+        print(f"[-] Viral worker board init error: {e}")
+        board_ids = []
+        
+    while True:
+        try:
+            next_item = database.get_next_unposted_viral_item()
+            if not next_item:
+                print("[*] Viral queue empty. Live scraping fresh batch...")
+                await loop.run_in_executor(None, scrape_fresh_viral_batch, 10)
+                
+            next_item = database.get_next_unposted_viral_item()
+            if next_item and board_ids:
+                print(f"[*] Auto-posting Viral Pin #{next_item['id']} to Pinterest...")
+                await loop.run_in_executor(None, post_next_viral_pin, poster, board_ids)
+            elif not board_ids:
+                board_ids = await loop.run_in_executor(None, poster.ensure_viral_boards)
+        except Exception as e:
+            print(f"[-] Viral background loop error: {e}")
+            
+        sleep_secs = max(config.VIRAL_POST_INTERVAL_MINUTES * 60, 600)
+        print(f"[*] Viral worker sleeping {config.VIRAL_POST_INTERVAL_MINUTES} mins until next pin...")
+        await asyncio.sleep(sleep_secs)
+
 @app.on_event("startup")
 def startup_event():
     import asyncio
     database.init_db()
     asyncio.create_task(background_automation_loop())
+    asyncio.create_task(viral_background_loop())
 
 # ================= UPTIME PING & HEALTH CHECK =================
 @app.head("/")

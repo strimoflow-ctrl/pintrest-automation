@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{{ item.seo_title }} - Private Stream</title>
+  
+  <!-- OpenGraph Metadata -->
+  <meta name="description" content="{{ item.seo_description }}">
+  <meta property="og:title" content="{{ item.seo_title }}">
+  <meta property="og:description" content="{{ item.seo_description }}">
+  <meta property="og:image" content="{{ site_url ~ '/media/' ~ item.file_path }}">
+  <meta property="og:type" content="video.other">
+  <meta name="theme-color" content="#0b0f19">
+
+  <!-- MONETAG OFFICIAL AD TAG -->
+  <script src="https://quge5.com/88/tag.min.js" data-zone="305803" async data-cfasync="false"></script>
+
+  {% if monetag_script_tag %}
+    {{ monetag_script_tag | safe }}
+  {% endif %}
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #07090e;
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background glow */
+    .ambient-bg {
+      position: fixed;
+      top: -20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(239, 68, 68, 0.22) 0%, rgba(0,0,0,0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .player-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 440px;
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.75);
+    }
+
+    /* Header Bar */
+    .player-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(17, 24, 39, 0.95);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .brand-tag {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #ef4444;
+      letter-spacing: 0.5px;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: #ef4444;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #ef4444;
+      animation: pulse-dot 1.5s infinite;
+    }
+
+    .badge-age {
+      font-size: 0.72rem;
+      background: rgba(239, 68, 68, 0.18);
+      color: #f87171;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* Video Frame */
+    .video-viewport {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 9 / 12;
+      background: #000;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .thumbnail-backdrop {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.72) contrast(1.05);
+      transition: transform 0.4s ease;
+    }
+
+    .video-viewport:hover .thumbnail-backdrop {
+      transform: scale(1.02);
+    }
+
+    .video-overlay-gradient {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 100%);
+    }
+
+    /* Center Play Lock Button */
+    .play-lock-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .play-btn-circle {
+      width: 76px;
+      height: 76px;
+      background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 2rem;
+      box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+      border: 3px solid rgba(255, 255, 255, 0.25);
+      animation: pulse-btn 2s infinite;
+      cursor: pointer;
+    }
+
+    .lock-pill {
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #facc15;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Bottom Info overlay on video */
+    .video-bottom-bar {
+      position: absolute;
+      bottom: 12px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 600;
+    }
+
+    /* Bottom Actions Section */
+    .action-panel {
+      padding: 18px 18px 20px 18px;
+      background: #111827;
+      text-align: center;
+    }
+
+    .video-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Progress Tracker */
+    .progress-wrapper {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #94a3b8;
+    }
+
+    .progress-meta span.active-step {
+      color: #ef4444;
+    }
+
+    .progress-bar-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ef4444 0%, #f97316 100%);
+      transition: width 0.35s ease-in-out;
+    }
+
+    /* Main CTA Button */
+    .btn-unlock {
+      width: 100%;
+      padding: 15px 20px;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(239, 68, 68, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-unlock:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(239, 68, 68, 0.6);
+    }
+
+    .btn-unlock:active {
+      transform: translateY(1px);
+    }
+
+    .btn-unlocked {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5) !important;
+      animation: pulse-green 1.8s infinite;
+    }
+
+    .hint-subtext {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 10px;
+    }
+
+    /* Keyframe Animations */
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    @keyframes pulse-btn {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.65); }
+      70% { box-shadow: 0 0 0 18px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    @keyframes pulse-green {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient-bg"></div>
+
+  <div class="player-card">
+    
+    <!-- Top Header -->
+    <div class="player-header">
+      <div class="brand-tag">
+        <div class="live-dot"></div>
+        <span>VIP PRIVATE STREAM</span>
+      </div>
+      <div class="badge-age">🔞 18+ UNCENSORED</div>
+    </div>
+
+    <!-- Video Frame / Player -->
+    <div class="video-viewport" id="videoTrigger">
+      <img src="{{ site_url ~ '/media/' ~ item.file_path }}" 
+           alt="{{ item.seo_title }}" 
+           class="thumbnail-backdrop">
+      <div class="video-overlay-gradient"></div>
+
+      <!-- Center Play & Lock -->
+      <div class="play-lock-container">
+        <div class="play-btn-circle" id="playIcon">
+          ▶
+        </div>
+        <div class="lock-pill" id="lockStatusPill">
+          🔒 Locked Video
+        </div>
+      </div>
+
+      <!-- Video Meta Overlay -->
+      <div class="video-bottom-bar">
+        <span>⏱️ Duration: 05:24 min</span>
+        <span>⚡ 1080p Ultra HD</span>
+      </div>
+    </div>
+
+    <!-- Interactive Action Panel -->
+    <div class="action-panel">
+      <h1 class="video-title">{{ item.seo_title }}</h1>
+
+      <!-- Step Counter Progress Bar -->
+      <div class="progress-wrapper">
+        <div class="progress-meta">
+          <span id="stepLabel">Verification Required</span>
+          <span class="active-step" id="stepCounterBadge">0 / {{ max_clicks }} Clicks</span>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progressBarFill"></div>
+        </div>
+      </div>
+
+      <!-- Main Action CTA Button -->
+      <button type="button" class="btn-unlock" id="unlockBtn">
+        <span id="btnIcon">🔓</span>
+        <span id="btnText">Click to Unlock Full Video [ Step 1 / {{ max_clicks }} ]</span>
+      </button>
+
+      <p class="hint-subtext" id="statusHint">
+        Tap the button above. Complete all 5 quick steps to unlock the full HD video stream.
+      </p>
+    </div>
+
+  </div>
+
+  <script>
+    (function() {
+      const TOTAL_STEPS = {{ max_clicks }};
+      const ITEM_ID = "{{ item.id }}";
+      const DIRECT_AD_URL = "{{ monetag_direct_link }}";
+      const TELEGRAM_BOT_URL = "{{ telegram_redirect_bot }}";
+
+      const storageKey = 'viral_unlock_' + ITEM_ID;
+      let currentStep = parseInt(sessionStorage.getItem(storageKey) || '0', 10);
+      if (isNaN(currentStep)) currentStep = 0;
+
+      const unlockBtn = document.getElementById('unlockBtn');
+      const btnText = document.getElementById('btnText');
+      const btnIcon = document.getElementById('btnIcon');
+      const playIcon = document.getElementById('playIcon');
+      const lockStatusPill = document.getElementById('lockStatusPill');
+      const stepCounterBadge = document.getElementById('stepCounterBadge');
+      const progressBarFill = document.getElementById('progressBarFill');
+      const statusHint = document.getElementById('statusHint');
+      const videoTrigger = document.getElementById('videoTrigger');
+
+      const STEP_TEXTS = [
+        "Click to Unlock Full Video [ Step 1 / " + TOTAL_STEPS + " ]",
+        "Tap Again to Verify [ 2 / " + TOTAL_STEPS + " ] ⚡",
+        "Connecting to HD Server... [ 3 / " + TOTAL_STEPS + " ] ⚡",
+        "Decrypting Full 1080p Stream... [ 4 / " + TOTAL_STEPS + " ] 🔥",
+        "1 Final Tap to Unlock Video! [ 5 / " + TOTAL_STEPS + " ] 💥"
+      ];
+
+      function updateUI() {
+        const percent = Math.min(Math.round((currentStep / TOTAL_STEPS) * 100), 100);
+        progressBarFill.style.width = percent + '%';
+        stepCounterBadge.textContent = currentStep + ' / ' + TOTAL_STEPS + ' Clicks';
+
+        if (currentStep >= TOTAL_STEPS) {
+          // UNLOCKED STATE
+          unlockBtn.classList.add('btn-unlocked');
+          btnIcon.textContent = '🚀';
+          btnText.textContent = 'WATCH FULL VIDEO ON TELEGRAM ▶️';
+          playIcon.textContent = '✅';
+          playIcon.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+          lockStatusPill.textContent = '🎉 Video Unlocked!';
+          lockStatusPill.style.color = '#34d399';
+          statusHint.textContent = '✅ Verification complete! Tap the green button to watch now on @landytv_bot';
+        } else {
+          // PROGRESS STATE
+          btnText.textContent = STEP_TEXTS[currentStep] || ("Step " + (currentStep + 1) + " of " + TOTAL_STEPS);
+          btnIcon.textContent = '🔓';
+          lockStatusPill.textContent = '🔒 Locked (' + currentStep + '/' + TOTAL_STEPS + ')';
+        }
+      }
+
+      function handleInteraction() {
+        if (currentStep < TOTAL_STEPS) {
+          // Open Monetag direct link in new tab
+          if (DIRECT_AD_URL && DIRECT_AD_URL.startsWith('http')) {
+            window.open(DIRECT_AD_URL, '_blank');
+          }
+
+          currentStep++;
+          sessionStorage.setItem(storageKey, currentStep);
+          updateUI();
+
+          // Record unlock increment on backend
+          fetch('/api/viral/' + ITEM_ID + '/click', { method: 'POST' }).catch(() => {});
+
+          if (currentStep >= TOTAL_STEPS) {
+            // Auto redirect after a brief 1.2s delay or let user click
+            setTimeout(() => {
+              window.location.href = TELEGRAM_BOT_URL;
+            }, 1200);
+          }
+        } else {
+          // Already unlocked -> Redirect to Telegram Bot
+          window.location.href = TELEGRAM_BOT_URL;
+        }
+      }
+
+      unlockBtn.addEventListener('click', handleInteraction);
+      videoTrigger.addEventListener('click', handleInteraction);
+
+      // Initial Render
+      updateUI();
+    })();
+  </script>
+</body>
+</html>
+

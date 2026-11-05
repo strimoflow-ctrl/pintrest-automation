@@ -127,6 +127,38 @@ async def view_pin_page(request: Request, item_id: int):
         "now_year": datetime.now().year
     })
 
+# =============================================================
+# VIRAL BOT 2 (18+ VIDEO PLAYER WITH 5-CLICK UNLOCK)
+# =============================================================
+@app.get("/v/{item_id}", response_class=HTMLResponse)
+async def view_viral_video_gate(request: Request, item_id: int):
+    item = database.get_viral_item_by_id(item_id)
+    if not item:
+        # Fallback to normal media item if not in viral table
+        item = database.get_item_by_id(item_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Video not found")
+
+    database.increment_viral_views(item_id)
+    
+    return templates.TemplateResponse(request, "video_gate.html", {
+        "item": item,
+        "site_url": config.SITE_BASE_URL,
+        "max_clicks": config.VIRAL_UNLOCK_CLICKS,
+        "monetag_direct_link": config.MONETAG_DIRECT_LINK,
+        "telegram_redirect_bot": config.TELEGRAM_REDIRECT_BOT,
+        "monetag_script_tag": config.MONETAG_SCRIPT_TAG
+    })
+
+@app.post("/api/viral/{item_id}/click")
+async def record_viral_click(item_id: int):
+    database.increment_viral_unlocks(item_id)
+    return {"success": True}
+
+@app.get("/api/viral/stats")
+async def api_viral_stats():
+    return database.get_viral_stats()
+
 @app.get("/download/{item_id}")
 async def download_media(item_id: int):
     item = database.get_item_by_id(item_id)

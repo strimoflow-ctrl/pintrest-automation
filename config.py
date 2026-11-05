@@ -40,8 +40,20 @@ MONETAG_DIRECT_LINK = os.getenv("MONETAG_DIRECT_LINK", "").strip()
 # Monetag In-Page / Vignette / Ad Tag script code or IDs
 MONETAG_SCRIPT_TAG = os.getenv("MONETAG_SCRIPT_TAG", "").strip()
 
+# ================= VIRAL BOT 2 (18+ CLICKBAIT & 5-CLICK UNLOCK) =================
+VIRAL_PINTEREST_SESSION = os.getenv("VIRAL_PINTEREST_SESSION", "").strip()
+VIRAL_PINTEREST_USERNAME = os.getenv("VIRAL_PINTEREST_USERNAME", "").strip()
+TELEGRAM_REDIRECT_BOT = os.getenv("TELEGRAM_REDIRECT_BOT", "https://t.me/landytv_bot").strip()
+VIRAL_POST_INTERVAL_MINUTES = get_int_env("VIRAL_POST_INTERVAL_MINUTES", 35)
+VIRAL_UNLOCK_CLICKS = get_int_env("VIRAL_UNLOCK_CLICKS", 5)
+
 # ================= STORAGE & PATHS =================
 MEDIA_DIR = BASE_DIR / "media"
 MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+
+VIRAL_MEDIA_DIR = MEDIA_DIR / "viral"
+VIRAL_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+
+VIRAL_CATALOGS_FILE = BASE_DIR / "viral catalogs"
 
 DB_PATH = BASE_DIR / "pins_database.db"

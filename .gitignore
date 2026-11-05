@@ -36,4 +36,5 @@ dist/
 Thumbs.db
 *.log
 render logs
+channel_id.txt
 

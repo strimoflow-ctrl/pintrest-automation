@@ -92,3 +92,4 @@ def set_last_scraped_id(msg_id: int):
         requests.put(url, json=int(msg_id), timeout=TIMEOUT)
     except Exception:
         pass
+

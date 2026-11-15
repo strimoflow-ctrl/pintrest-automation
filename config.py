@@ -35,10 +35,10 @@ TIMER_SECONDS = get_int_env("TIMER_SECONDS", 9)
 POST_INTERVAL_MINUTES = get_int_env("POST_INTERVAL_MINUTES", 35)
 
 # Monetag Direct Link (triggers on Download button click)
-MONETAG_DIRECT_LINK = os.getenv("MONETAG_DIRECT_LINK", "").strip()
+MONETAG_DIRECT_LINK = os.getenv("MONETAG_DIRECT_LINK", "https://uplcm.com/4/12271752").strip() or "https://uplcm.com/4/12271752"
 
 # Monetag In-Page / Vignette / Ad Tag script code or IDs
-MONETAG_SCRIPT_TAG = os.getenv("MONETAG_SCRIPT_TAG", "").strip()
+MONETAG_SCRIPT_TAG = os.getenv("MONETAG_SCRIPT_TAG", '<script src="https://quge5.com/88/tag.min.js" data-zone="310710" async data-cfasync="false"></script>').strip() or '<script src="https://quge5.com/88/tag.min.js" data-zone="310710" async data-cfasync="false"></script>'
 
 # ================= VIRAL BOT 2 (18+ CLICKBAIT & 5-CLICK UNLOCK) =================
 VIRAL_PINTEREST_SESSION = os.getenv("VIRAL_PINTEREST_SESSION", "").strip()

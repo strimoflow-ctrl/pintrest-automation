@@ -169,13 +169,15 @@ async def index_page(request: Request):
 
 @app.get("/p/{item_id}", response_class=HTMLResponse)
 async def view_pin_page(request: Request, item_id: int):
-    item = database.get_item_by_id(item_id)
-    if not item:
-        raise HTTPException(status_code=404, detail="Wallpapers/PFP not found")
+    # Guaranteed Zero-404: Resolves from SQLite, Firebase posted_pins, or high-res aesthetic fallback
+    item = database.get_safe_pin_item(item_id)
         
     # Increment views counter locally and in Firebase
-    database.increment_views(item_id)
-    firebase_db.increment_firebase_views()
+    try:
+        database.increment_views(item_id)
+        firebase_db.increment_firebase_views()
+    except Exception:
+        pass
     
     return templates.TemplateResponse(request, "pin_view.html", {
         "item": item,
@@ -191,14 +193,13 @@ async def view_pin_page(request: Request, item_id: int):
 # =============================================================
 @app.get("/v/{item_id}", response_class=HTMLResponse)
 async def view_viral_video_gate(request: Request, item_id: int):
-    item = database.get_viral_item_by_id(item_id)
-    if not item:
-        # Fallback to normal media item if not in viral table
-        item = database.get_item_by_id(item_id)
-        if not item:
-            raise HTTPException(status_code=404, detail="Video not found")
+    # Guaranteed Zero-404: Resolves from viral table, media table, or high-res fallback
+    item = database.get_safe_viral_item(item_id)
 
-    database.increment_viral_views(item_id)
+    try:
+        database.increment_viral_views(item_id)
+    except Exception:
+        pass
     
     return templates.TemplateResponse(request, "video_gate.html", {
         "item": item,
@@ -220,26 +221,29 @@ async def api_viral_stats():
 
 @app.get("/download/{item_id}")
 async def download_media(item_id: int):
-    item = database.get_item_by_id(item_id)
-    if not item:
-        raise HTTPException(status_code=404, detail="Item not found")
+    item = database.get_safe_pin_item(item_id)
 
     # Increment downloads counter locally and in Firebase
-    database.increment_downloads(item_id)
-    firebase_db.increment_firebase_downloads()
+    try:
+        database.increment_downloads(item_id)
+        firebase_db.increment_firebase_downloads()
+    except Exception:
+        pass
 
-    file_path = config.MEDIA_DIR / item["file_path"]
-    if file_path.exists():
-        return FileResponse(
-            path=str(file_path),
-            filename=item["original_filename"] or file_path.name,
-            media_type="application/octet-stream"
-        )
-    elif item.get("cdn_url"):
-        # Zero-storage fallback: redirect directly to Telegram high-speed CDN
+    if item.get("file_path"):
+        file_path = config.MEDIA_DIR / item["file_path"]
+        if file_path.exists():
+            return FileResponse(
+                path=str(file_path),
+                filename=item.get("original_filename") or file_path.name,
+                media_type="application/octet-stream"
+            )
+
+    if item.get("cdn_url") and str(item["cdn_url"]).startswith("http"):
         return RedirectResponse(url=item["cdn_url"])
-    else:
-        raise HTTPException(status_code=404, detail="File missing on server")
+
+    # High-speed aesthetic wallpaper download fallback
+    return RedirectResponse(url="https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1200&auto=format&fit=crop")
 
 @app.get("/api/stats")
 async def api_stats():

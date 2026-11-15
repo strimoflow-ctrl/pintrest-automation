@@ -93,3 +93,31 @@ def set_last_scraped_id(msg_id: int):
     except Exception:
         pass
 
+# In-memory cache for fast lookups by /p/{id}
+_posted_pins_cache = {}
+_last_cache_time = 0
+
+def get_posted_pin_by_url_id(url_item_id: int) -> dict:
+    """Finds pin data from Firebase posted_pins by url_item_id (e.g. 402 from /p/402)."""
+    global _posted_pins_cache, _last_cache_time
+    now = time.time()
+    if not _posted_pins_cache or (now - _last_cache_time > 300):
+        try:
+            url = f"{BASE_URL}/pinterest_automation/posted_pins.json"
+            resp = requests.get(url, timeout=TIMEOUT)
+            if resp.status_code == 200 and resp.json():
+                cache = {}
+                for msg_id, pdata in resp.json().items():
+                    link = (pdata.get("link") or "").rstrip("/")
+                    if "/p/" in link:
+                        try:
+                            uid = int(link.split("/p/")[-1])
+                            cache[uid] = pdata
+                        except Exception:
+                            pass
+                _posted_pins_cache = cache
+                _last_cache_time = now
+        except Exception:
+            pass
+    return _posted_pins_cache.get(url_item_id, {})
+

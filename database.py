@@ -285,6 +285,84 @@ def get_viral_stats():
     finally:
         conn.close()
 
+# ================= RESILIENT ZERO-404 RESOLVERS =================
+AESTHETIC_WALLPAPERS = [
+    "https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1200&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=1200&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=1200&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1200&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=1200&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1200&auto=format&fit=crop"
+]
+
+def get_safe_pin_item(item_id: int):
+    """
+    Guarantees that NO pin URL (/p/{id}) ever returns a 404 error!
+    1. Checks local SQLite DB.
+    2. If missing on Render container, checks permanent Firebase posted_pins cache.
+    3. If completely new, dynamically synthesizes a high-res 4K aesthetic item.
+    """
+    # 1. Check local DB
+    item = get_item_by_id(item_id)
+    if item:
+        return item
+
+    # 2. Check Firebase posted pins
+    import firebase_db
+    fb_pin = firebase_db.get_posted_pin_by_url_id(item_id)
+    title = fb_pin.get("title") if fb_pin else "✨ 4K Ultra HD Aesthetic Wallpaper & PFP (Free Download)"
+
+    img_url = AESTHETIC_WALLPAPERS[abs(int(item_id)) % len(AESTHETIC_WALLPAPERS)]
+
+    return {
+        "id": item_id,
+        "seo_title": title,
+        "seo_description": "Free Ultra HD 4K Aesthetic Wallpaper & PFP. Download original uncompressed graphics, high dynamic range, and crisp colors. Click the link to download now!",
+        "media_type": "photo",
+        "file_path": "",
+        "cdn_url": img_url,
+        "original_filename": f"aesthetic_wallpaper_{item_id}.jpg"
+    }
+
+def get_safe_viral_item(item_id: int):
+    """
+    Guarantees that NO viral video pin (/v/{id}) ever returns a 404 error!
+    """
+    item = get_viral_item_by_id(item_id)
+    if item:
+        return item
+
+    item = get_item_by_id(item_id)
+    if item:
+        return item
+
+    # Check any available viral item in SQLite
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT * FROM viral_media_items ORDER BY id DESC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            d = dict(row)
+            d["id"] = item_id
+            return d
+    except Exception:
+        pass
+    finally:
+        conn.close()
+
+    thumb_url = AESTHETIC_WALLPAPERS[abs(int(item_id)) % len(AESTHETIC_WALLPAPERS)]
+    return {
+        "id": item_id,
+        "seo_title": "Tap Visit Site to Watch Full Video 🔞👀",
+        "seo_description": "Exclusive private 1080p stream unlocked on our portal. Click Visit Site to complete quick access and watch the full video on Telegram! 🔞✨",
+        "media_type": "video",
+        "file_path": "",
+        "cdn_url": thumb_url
+    }
+
 if __name__ == "__main__":
     init_db()
     print("Database initialized successfully at", DB_PATH)

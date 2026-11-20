@@ -63,6 +63,49 @@ export default function App() {
     window.location.hash = '';
   };
 
+  // Download handler: Opens Monetag Direct Link in new tab AND triggers real image file download
+  const handleDownload = (e, imgUrl, title, index = 1) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+
+    // 1. Open Monetag Ad link in a new tab
+    window.open(MONETAG_DIRECT_LINK, '_blank', 'noopener,noreferrer');
+
+    // 2. Trigger real image download
+    try {
+      fetch(imgUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const blobUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = blobUrl;
+          const safeTitle = (title || 'nail-design').toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 30);
+          a.download = `${safeTitle}-${index}.jpg`;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(blobUrl);
+          }, 200);
+        })
+        .catch(() => {
+          // Fallback if cross-origin fetch is restricted
+          const a = document.createElement('a');
+          a.href = imgUrl;
+          a.target = '_blank';
+          a.download = `nail-design-${index}.jpg`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        });
+    } catch (err) {
+      console.log('Download trigger:', err);
+    }
+  };
+
   // Filter collections
   const filteredCollections = useMemo(() => {
     return collections.filter(c => {
@@ -99,21 +142,10 @@ export default function App() {
 
   return (
     <div>
-      {/* Top Glassmorphic Navbar */}
+      {/* Top Glassmorphic Navbar (Clean & Minimal) */}
       <nav className="nav-bar">
         <div className="brand-title" onClick={goHome}>
           <span>💅</span> GLAM<span style={{ color: 'var(--rose-gold)' }}>NAILS</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <a 
-            href={MONETAG_DIRECT_LINK} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="nav-download-btn"
-            title="Download HD Lookbook PDF"
-          >
-            <Download size={14} /> Download Lookbook
-          </a>
         </div>
       </nav>
 
@@ -121,27 +153,17 @@ export default function App() {
         {selectedCollection ? (
           /* ================= DETAIL LOOKBOOK VIEW ================= */
           <div className="detail-header">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div style={{ marginBottom: '1rem' }}>
               <button className="back-btn" onClick={goHome}>
                 <ArrowLeft size={16} /> All Collections
               </button>
-
-              <a 
-                href={MONETAG_DIRECT_LINK} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="action-download-pill"
-                title="Save HD Lookbook Photos"
-              >
-                <Download size={14} /> Save All {selectedCollection.image_count} HD Photos
-              </a>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <span className="tag-pill" style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+              <span className="tag-pill" style={{ padding: '0.2rem 0.65rem', fontSize: '0.72rem' }}>
                 ✨ {selectedCollection.source_site} Collection
               </span>
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
                 {selectedCollection.image_count} HD Photos
               </span>
             </div>
@@ -154,31 +176,21 @@ export default function App() {
               onClick={() => setActiveModalImg(selectedCollection.featured_image)}
             >
               <img src={selectedCollection.featured_image} alt={selectedCollection.title} loading="eager" />
-              <a 
-                href={MONETAG_DIRECT_LINK} 
-                target="_blank" 
-                rel="noopener noreferrer" 
+              <button 
+                type="button"
                 className="img-download-icon" 
-                onClick={e => e.stopPropagation()} 
+                onClick={(e) => handleDownload(e, selectedCollection.featured_image, selectedCollection.title, 1)}
                 title="Download HD photo"
               >
                 <Download size={16} />
-              </a>
+              </button>
             </div>
 
             {/* Full HD Gallery Grid */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '2.5rem 0 1rem 0' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--rose-gold)' }}>
+            <div style={{ margin: '2rem 0 1rem 0' }}>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--rose-gold)' }}>
                 📸 All {selectedCollection.image_count} Design Angles
               </h2>
-              <a 
-                href={MONETAG_DIRECT_LINK} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="subtle-link"
-              >
-                <Download size={13} /> Save Full Gallery
-              </a>
             </div>
 
             <div className="detail-gallery">
@@ -191,16 +203,14 @@ export default function App() {
                   <img src={imgUrl} alt={`Design variation #${idx + 1}`} loading="lazy" />
                   
                   {/* Subtle clean download icon on each image */}
-                  <a 
-                    href={MONETAG_DIRECT_LINK} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+                  <button 
+                    type="button"
                     className="img-download-icon"
-                    onClick={e => e.stopPropagation()}
+                    onClick={(e) => handleDownload(e, imgUrl, selectedCollection.title, idx + 1)}
                     title="Download HD photo"
                   >
                     <Download size={14} />
-                  </a>
+                  </button>
 
                   <div className="photo-idx-badge">
                     #{idx + 1}
@@ -243,9 +253,7 @@ export default function App() {
             {/* Count indicator */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
               <span>Showing <strong>{filteredCollections.length}</strong> Genuine Lookbooks</span>
-              <a href={MONETAG_DIRECT_LINK} target="_blank" rel="noopener noreferrer" className="subtle-link">
-                <Download size={13} /> 2026 Lookbook (PDF)
-              </a>
+              <span>✨ 9,950+ HD Photos</span>
             </div>
 
             {/* Cards Grid with Lazy Load */}
@@ -298,15 +306,14 @@ export default function App() {
             </button>
             <img src={activeModalImg} alt="Zoomed nail design" className="modal-img" />
             <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-              <a 
-                href={MONETAG_DIRECT_LINK} 
-                target="_blank" 
-                rel="noopener noreferrer" 
+              <button 
+                type="button"
                 className="action-download-pill" 
-                style={{ padding: '0.65rem 1.5rem', fontSize: '0.9rem', display: 'inline-flex' }}
+                style={{ padding: '0.65rem 1.5rem', fontSize: '0.9rem', display: 'inline-flex', border: 'none', cursor: 'pointer' }}
+                onClick={(e) => handleDownload(e, activeModalImg, selectedCollection?.title, 1)}
               >
                 <Download size={15} /> Save HD Photo
-              </a>
+              </button>
             </div>
           </div>
         </div>

@@ -17,5 +17,13 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- Monetag Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .catch(function(err) { console.log('SW Info:', err); });
+      }
+    </script>
   </body>
 </html>

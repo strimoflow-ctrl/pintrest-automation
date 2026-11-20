@@ -23,7 +23,9 @@ def run_server():
     # Initialize DB
     database.populate_catalogs_if_empty()
     stats = database.get_stats()
-    print(f"[✓] Available Inventory: {stats['total_tutorials']} Tutorials ({stats['posted_pins']} Posted)")
+    total_col = stats.get('total_collections', stats.get('total_tutorials', 0))
+    posted_cnt = stats.get('posted_pins', 0)
+    print(f"[✓] Available Inventory: {total_col} Collections ({posted_cnt} Posted)")
     
     uvicorn.run("web_app.app:app", host="0.0.0.0", port=8000, reload=False)
 

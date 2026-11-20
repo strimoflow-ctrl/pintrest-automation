@@ -207,6 +207,7 @@ def get_stats() -> Dict[str, Any]:
     conn.close()
     return {
         "total_collections": total_collections,
+        "total_tutorials": total_collections,
         "total_pins": total_pins,
         "posted_pins": posted_pins,
         "unposted_pins": total_pins - posted_pins

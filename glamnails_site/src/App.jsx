@@ -26,14 +26,28 @@ export default function App() {
   const [visibleCount, setVisibleCount] = useState(16);
   const [activeModalImg, setActiveModalImg] = useState(null);
 
-  // Sync hash routing
+  // Sync hash routing & handle mobile hardware back button
   useEffect(() => {
-    const handleHashChange = () => {
-      setCurrentHash(window.location.hash);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    const handleRouteSync = () => {
+      setActiveModalImg(null);
+      setCurrentHash(window.location.hash || '');
     };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+
+    window.addEventListener('hashchange', handleRouteSync);
+    window.addEventListener('popstate', handleRouteSync);
+
+    // If user arrived directly on a nail slug (e.g. from Pinterest)
+    // We insert a 'home' state before it, so pressing mobile back goes to All Collections instead of leaving the site!
+    if (window.location.hash && window.location.hash.startsWith('#/nail/')) {
+      const currentDetail = window.location.hash;
+      window.history.replaceState({ page: 'home' }, '', window.location.pathname);
+      window.history.pushState({ page: 'detail' }, '', window.location.pathname + currentDetail);
+    }
+
+    return () => {
+      window.removeEventListener('hashchange', handleRouteSync);
+      window.removeEventListener('popstate', handleRouteSync);
+    };
   }, []);
 
   // Determine current route: /nail/:slug or #/nail/:slug
@@ -57,10 +71,22 @@ export default function App() {
   // Navigate helper
   const navigateTo = (slug) => {
     window.location.hash = `#/nail/${slug}`;
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
-  const goHome = () => {
-    window.location.hash = '';
+  const goHome = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setActiveModalImg(null);
+    if (window.history.length > 1 && window.location.hash.startsWith('#/nail/')) {
+      window.history.back();
+    } else {
+      window.location.hash = '';
+      setCurrentHash('');
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
   };
 
   // Download handler: Opens Monetag Direct Link in new tab AND triggers real image file download
@@ -71,7 +97,9 @@ export default function App() {
     }
 
     // 1. Open Monetag Ad link in a new tab
-    window.open(MONETAG_DIRECT_LINK, '_blank', 'noopener,noreferrer');
+    if (MONETAG_DIRECT_LINK) {
+      window.open(MONETAG_DIRECT_LINK, '_blank', 'noopener,noreferrer');
+    }
 
     // 2. Trigger real image download
     try {
@@ -142,7 +170,7 @@ export default function App() {
 
   return (
     <div>
-      {/* Top Glassmorphic Navbar (Clean & Minimal) */}
+      {/* Top Glassmorphic Navbar */}
       <nav className="nav-bar">
         <div className="brand-title" onClick={goHome}>
           <span>💅</span> GLAM<span style={{ color: 'var(--rose-gold)' }}>NAILS</span>
@@ -152,25 +180,29 @@ export default function App() {
       <main className="container animate-fade">
         {selectedCollection ? (
           /* ================= DETAIL LOOKBOOK VIEW ================= */
-          <div className="detail-header">
-            <div style={{ marginBottom: '1rem' }}>
-              <button className="back-btn" onClick={goHome}>
-                <ArrowLeft size={16} /> All Collections
+          <div className="detail-container">
+            {/* Top Navigation Row - Compact Single Line */}
+            <div className="detail-top-nav">
+              <button className="back-btn-luxury" onClick={goHome}>
+                <ArrowLeft size={14} />
+                <span>All Collections</span>
               </button>
+
+              <div className="badge-pill-luxury">
+                <Sparkles size={12} className="sparkle-icon" />
+                <span>{selectedCollection.image_count} HD Photos</span>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-              <span className="tag-pill" style={{ padding: '0.2rem 0.65rem', fontSize: '0.72rem' }}>
-                ✨ {selectedCollection.source_site} Collection
-              </span>
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                {selectedCollection.image_count} HD Photos
-              </span>
+            {/* Title Header - Compact */}
+            <div className="detail-header-block">
+              <h1 className="detail-title-luxury">{selectedCollection.title}</h1>
+              <div className="detail-meta-row">
+                <span>Tap photo to zoom • Tap icon to download in HD</span>
+              </div>
             </div>
 
-            <h1 className="detail-title">{selectedCollection.title}</h1>
-
-            {/* Featured Hero Image with subtle download icon */}
+            {/* Featured Hero Image with clean download icon */}
             <div 
               className="gallery-photo-card hero-card"
               onClick={() => setActiveModalImg(selectedCollection.featured_image)}
@@ -186,10 +218,10 @@ export default function App() {
               </button>
             </div>
 
-            {/* Full HD Gallery Grid */}
-            <div style={{ margin: '2rem 0 1rem 0' }}>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--rose-gold)' }}>
-                📸 All {selectedCollection.image_count} Design Angles
+            {/* Gallery Section Header */}
+            <div className="gallery-section-bar">
+              <h2 className="gallery-section-title">
+                📸 All {selectedCollection.image_count} Angles & Looks
               </h2>
             </div>
 

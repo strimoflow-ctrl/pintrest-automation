@@ -293,60 +293,111 @@ body {
   color: var(--text-muted);
 }
 
-/* Detail Lookbook Page */
-.detail-header {
-  margin-bottom: 2rem;
+/* ================= LUXURY DETAIL LOOKBOOK PAGE ================= */
+.detail-container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 0.5rem;
 }
 
-.back-btn {
-  display: inline-flex;
+.detail-top-nav {
+  display: flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.95rem;
-  border-radius: 999px;
-  background: rgba(26, 17, 28, 0.7);
-  border: 1px solid var(--border-subtle);
-  color: var(--rose-gold);
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+  padding: 0.2rem 0 0.45rem 0;
+  border-bottom: 1px solid rgba(224, 168, 153, 0.12);
+  flex-wrap: nowrap;
 }
 
-.back-btn:hover {
-  background: rgba(224, 168, 153, 0.15);
-  border-color: var(--rose-gold);
-}
-
-.action-download-pill {
+.back-btn-luxury {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.45rem 1rem;
+  padding: 0.38rem 0.85rem;
   border-radius: 999px;
-  background: var(--grad-luxury);
-  color: #fff;
-  font-size: 0.82rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(224, 168, 153, 0.25);
+  color: var(--rose-light);
+  font-size: 0.78rem;
   font-weight: 600;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(184, 64, 101, 0.3);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
-.action-download-pill:hover {
-  background: var(--grad-hover);
-  transform: translateY(-1px);
+.back-btn-luxury:hover {
+  background: rgba(224, 168, 153, 0.15);
+  border-color: var(--rose-gold);
+  color: #ffffff;
+  transform: translateX(-2px);
 }
 
-.detail-title {
+.badge-pill-luxury {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(184, 64, 101, 0.12);
+  border: 1px solid rgba(224, 168, 153, 0.2);
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-pill-luxury .sparkle-icon {
+  color: var(--rose-gold);
+}
+
+.detail-header-block {
+  margin-bottom: 0.75rem;
+  text-align: left;
+}
+
+.detail-title-luxury {
   font-family: var(--font-heading);
-  font-size: 1.95rem;
-  font-weight: 800;
+  font-size: 1.25rem;
+  font-weight: 700;
   line-height: 1.25;
-  margin-bottom: 1.25rem;
-  background: linear-gradient(135deg, #fff 40%, var(--rose-gold) 100%);
+  margin: 0 0 0.25rem 0;
+  color: #ffffff;
+  background: linear-gradient(135deg, #ffffff 40%, #f4c2c7 80%, var(--rose-gold) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  letter-spacing: -0.01em;
+}
+
+.detail-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  color: rgba(244, 194, 199, 0.7);
+  font-weight: 400;
+  margin: 0;
+}
+
+.gallery-section-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 1.75rem 0 0.85rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(224, 168, 153, 0.14);
+}
+
+.gallery-section-title {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .hero-card {

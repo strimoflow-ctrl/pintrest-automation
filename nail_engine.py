@@ -75,40 +75,40 @@ class BannerGenerator:
             overlay = Image.new("RGBA", (target_w, target_h), (255, 255, 255, 0))
             draw = ImageDraw.Draw(overlay)
 
-            # Fonts with larger, bolder, high-contrast size
+            # Fonts with large, bold, high-contrast size
             try:
-                font_top = ImageFont.truetype("arialbd.ttf", 44)
-                font_main = ImageFont.truetype("arialbd.ttf", 58)
-                font_sub = ImageFont.truetype("arialbd.ttf", 36)
+                font_main = ImageFont.truetype("arialbd.ttf", 54)
             except Exception:
-                font_top = ImageFont.load_default()
                 font_main = ImageFont.load_default()
-                font_sub = ImageFont.load_default()
 
-            # 1. Top Luxury Badge
-            badge_h = 70
-            badge_w = 540
-            badge_x = (target_w - badge_w) // 2
-            badge_y = 50
-            draw.rounded_rectangle(
-                [badge_x, badge_y, badge_x + badge_w, badge_y + badge_h],
-                radius=35,
-                fill=(20, 10, 22, 240),
-                outline=(224, 168, 153, 255),
-                width=4
-            )
-            draw.text((target_w // 2, badge_y + (badge_h // 2)), "✨ 2026 TRENDING NAILS", fill=(255, 255, 255, 255), font=font_top, anchor="mm")
-
-            # 2. Bottom Luxury Dark-Berry Banner (280px height for large readable text)
-            banner_h = 280
+            # High-contrast, clean bottom banner (160px height)
+            banner_h = 160
             banner_y = target_h - banner_h
-            draw.rectangle([0, banner_y, target_w, target_h], fill=(18, 9, 20, 245))
+            draw.rectangle([0, banner_y, target_w, target_h], fill=(16, 9, 18, 245))
+            
             # Gold Divider Line
-            draw.line([(0, banner_y), (target_w, banner_y)], fill=(224, 168, 153, 255), width=7)
+            draw.line([(0, banner_y), (target_w, banner_y)], fill=(224, 168, 153, 255), width=6)
 
-            # Main text & Subtext (Big, Bold, Crisp)
-            draw.text((target_w // 2, banner_y + 90), "AESTHETIC NAIL LOOKBOOK 💅", fill=(255, 255, 255, 255), font=font_main, anchor="mm")
-            draw.text((target_w // 2, banner_y + 185), "TAP VISIT TO VIEW ALL LOOKS & SHADES ➔", fill=(244, 194, 199, 255), font=font_sub, anchor="mm")
+            # Direct CTA instructing Pinterest user to tap the 'Visit site' button
+            banner_text = 'CLICK "VISIT SITE" TO VIEW ALL'
+            bbox = draw.textbbox((0, 0), banner_text, font=font_main)
+            text_w = bbox[2] - bbox[0]
+            text_h = bbox[3] - bbox[1]
+            
+            total_content_w = text_w + 35  # text + gap + arrow
+            start_x = (target_w - total_content_w) // 2
+            center_y = banner_y + (banner_h // 2)
+
+            # Draw text in bright crisp white
+            draw.text((start_x, center_y - (text_h // 2)), banner_text, fill=(255, 255, 255, 255), font=font_main)
+
+            # Draw crisp gold arrow triangle
+            arrow_x = start_x + text_w + 18
+            draw.polygon([
+                (arrow_x, center_y - 16),
+                (arrow_x + 16, center_y),
+                (arrow_x, center_y + 16)
+            ], fill=(224, 168, 153, 255))
 
             # Composite and save
             final_img = Image.alpha_composite(img_cropped, overlay).convert("RGB")

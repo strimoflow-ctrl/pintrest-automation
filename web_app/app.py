@@ -55,7 +55,9 @@ async def on_startup():
     print("[*] Initializing GlamNails Modern Engine...")
     database.populate_catalogs_if_empty()
     stats = database.get_stats()
-    print(f"[✓] Database ready: {stats['total_tutorials']} lookbooks loaded ({stats['posted_pins']} posted)")
+    total_col = stats.get('total_collections', stats.get('total_tutorials', 0))
+    posted_cnt = stats.get('posted_pins', 0)
+    print(f"[✓] Database ready: {total_col} lookbooks loaded ({posted_cnt} posted)")
     asyncio.create_task(background_pin_poster())
 
 @app.get("/sw.js")

@@ -6,7 +6,6 @@ from datetime import datetime
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
 # Add project root to sys.path
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -16,16 +15,15 @@ import config
 import database
 import nail_engine
 
-app = FastAPI(title="GlamNails DIY & Monetag Hub")
+app = FastAPI(title="GlamNails Modern Lookbook Hub")
 
-# Mount static and media directories
-STATIC_DIR = Path(__file__).resolve().parent / "static"
-TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
+DIST_DIR = BASE_DIR / "glamnails_site" / "dist"
+ASSETS_DIR = DIST_DIR / "assets"
 
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+if ASSETS_DIR.exists():
+    app.mount("/assets", StaticFiles(directory=str(ASSETS_DIR)), name="assets")
+
 app.mount("/media", StaticFiles(directory=str(config.MEDIA_DIR)), name="media")
-
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 async def background_pin_poster():
     """
@@ -41,7 +39,7 @@ async def background_pin_poster():
     
     while True:
         try:
-            print(f"[*] Posting nail tutorial to Pinterest...")
+            print(f"[*] Posting nail collection pin to Pinterest...")
             success = nail_engine.post_next_nail_pin()
             if success:
                 print(f"[✓] Pin successfully posted! Next scheduled post in {config.POST_INTERVAL_MINUTES} minutes.")
@@ -54,13 +52,10 @@ async def background_pin_poster():
 
 @app.on_event("startup")
 async def on_startup():
-    # Initialize DB and populate 641 tutorials from JSON catalogs if first run
-    print("[*] Initializing Nail Tutorials Database...")
-    inserted = database.populate_catalogs_if_empty()
+    print("[*] Initializing GlamNails Modern Engine...")
+    database.populate_catalogs_if_empty()
     stats = database.get_stats()
-    print(f"[✓] Database ready: {stats['total_tutorials']} tutorials loaded ({stats['posted_pins']} posted)")
-    
-    # Start auto-posting loop as non-blocking background task
+    print(f"[✓] Database ready: {stats['total_tutorials']} lookbooks loaded ({stats['posted_pins']} posted)")
     asyncio.create_task(background_pin_poster())
 
 @app.get("/sw.js")
@@ -71,32 +66,15 @@ async def get_service_worker():
         return FileResponse(str(sw_file), media_type="application/javascript")
     raise HTTPException(status_code=404, detail="Service worker not found")
 
-@app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
-    """Homepage gallery of trending nail tutorials."""
-    tutorials = database.get_recent_tutorials(limit=36)
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "tutorials": tutorials,
-        "monetag_script_tag": config.MONETAG_SCRIPT_TAG,
-        "monetag_direct_link": config.MONETAG_DIRECT_LINK
-    })
-
-@app.get("/nail/{slug}", response_class=HTMLResponse)
-async def view_nail_tutorial(request: Request, slug: str):
-    """Destination landing page for Pinterest pins."""
-    tutorial = database.get_tutorial_by_slug(slug)
-    if not tutorial:
-        raise HTTPException(status_code=404, detail="Nail tutorial not found")
-        
-    database.increment_views(slug)
-    
-    return templates.TemplateResponse("article.html", {
-        "request": request,
-        "tutorial": tutorial,
-        "monetag_script_tag": config.MONETAG_SCRIPT_TAG,
-        "monetag_direct_link": config.MONETAG_DIRECT_LINK
-    })
+@app.get("/")
+@app.get("/nail/{slug}")
+@app.get("/lookbook/{slug}")
+async def serve_react_app(slug: str = None):
+    """Serves the modern React SPA lookbook."""
+    index_file = DIST_DIR / "index.html"
+    if index_file.exists():
+        return FileResponse(str(index_file))
+    raise HTTPException(status_code=404, detail="Frontend build not found")
 
 @app.get("/api/stats")
 async def get_stats():

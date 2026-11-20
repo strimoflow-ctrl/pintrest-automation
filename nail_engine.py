@@ -107,8 +107,8 @@ class BannerGenerator:
             draw.line([(0, banner_y), (target_w, banner_y)], fill=(224, 168, 153, 255), width=6)
 
             # Main text & Subtext
-            draw.text((target_w // 2, banner_y + 80), "STEP-BY-STEP DIY TUTORIAL 💅", fill=(255, 255, 255, 255), font=font_main, anchor="mm")
-            draw.text((target_w // 2, banner_y + 160), "EASY 5-STEP GUIDE • TAP VISIT TO SEE SHADES ✨", fill=(244, 194, 194, 255), font=font_sub, anchor="mm")
+            draw.text((target_w // 2, banner_y + 80), "AESTHETIC NAIL LOOKBOOK 💅", fill=(255, 255, 255, 255), font=font_main, anchor="mm")
+            draw.text((target_w // 2, banner_y + 160), "TAP VISIT TO VIEW ALL LOOKS & SHADES ✨", fill=(244, 194, 194, 255), font=font_sub, anchor="mm")
 
             # Composite and save
             final_img = Image.alpha_composite(img_cropped, overlay).convert("RGB")
@@ -240,8 +240,8 @@ def post_next_nail_pin() -> bool:
     all_imgs = [featured_img] + tutorial.get("all_images", [])
     banner_path = BannerGenerator.create_pinterest_banner(all_imgs, slug, title)
     
-    # Target Destination URL on our website
-    landing_url = f"{config.SITE_BASE_URL}/nail/{slug}"
+    # Target Destination URL on our website (SPA Lookbook)
+    landing_url = f"{config.SITE_BASE_URL}/#/nail/{slug}"
     
     # Direct image url to provide to Pinterest
     # If site is deployed on render, we can use our hosted banner URL, or fallback to original high-res image

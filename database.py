@@ -44,7 +44,7 @@ def init_db():
     conn.close()
 
 def populate_catalogs_if_empty():
-    """Loads all parsed nail tutorials from JSON catalogs into the database."""
+    """Loads all genuine nail lookbooks from genuine_nail_collections.json into database."""
     init_db()
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -55,63 +55,59 @@ def populate_catalogs_if_empty():
         conn.close()
         return count
     
-    catalogs_dir = config.NAIL_CATALOGS_DIR
-    if not catalogs_dir.exists():
+    clean_json_file = config.NAIL_CATALOGS_DIR / "genuine_nail_collections.json"
+    if not clean_json_file.exists():
         conn.close()
         return 0
     
     inserted = 0
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     
-    for json_file in catalogs_dir.glob("*_catalog.json"):
-        if "all_nail_catalogs_summary" in json_file.name:
-            continue
-        try:
-            with open(json_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            posts = data.get("posts", [])
-            for p in posts:
-                tutorial_id = p.get("id") or p.get("slug")
-                slug = p.get("slug")
-                if not slug or not p.get("featured_image"):
-                    continue
-                
-                seo = p.get("pinterest_seo", {})
-                title = p.get("title", "Aesthetic Nail Art Tutorial")
-                # Clean up title if it contains outfit or non-nail word
-                if "nail" not in title.lower():
-                    title = f"{title} Nail Art Design"
-                
-                pin_title = seo.get("title") or f"{title} | Easy Step-by-Step DIY Tutorial ✨"
-                pin_desc = seo.get("description") or f"Easy step-by-step DIY tutorial for {title}. Tap visit for the full guide and color shades! 💅"
-                
-                cursor.execute("""
-                    INSERT OR IGNORE INTO nail_tutorials (
-                        tutorial_id, slug, title, category, source_site, source_url,
-                        featured_image, all_images_json, image_count, tutorial_steps_json,
-                        pinterest_title, pinterest_description, pinterest_tags_json,
-                        is_posted, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
-                """, (
-                    tutorial_id,
-                    slug,
-                    title,
-                    p.get("category", "Nail Art DIY"),
-                    p.get("source_site", "Beauty Hub"),
-                    p.get("source_url", ""),
-                    p.get("featured_image"),
-                    json.dumps(p.get("all_images", [])),
-                    p.get("image_count", 0),
-                    json.dumps(p.get("tutorial_steps", [])),
-                    pin_title,
-                    pin_desc,
-                    json.dumps(seo.get("tags", ["#nailart", "#diynails", "#acrylicnails"])),
-                    now
-                ))
-                inserted += 1
-        except Exception as e:
-            print(f"[-] Error loading {json_file.name}: {e}")
+    try:
+        with open(clean_json_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        collections = data.get("collections", [])
+        for c in collections:
+            tutorial_id = c.get("id") or c.get("slug")
+            slug = c.get("slug")
+            title = c.get("title")
+            featured_img = c.get("featured_image")
+            images = c.get("images", [])
+            image_count = c.get("image_count", len(images))
             
+            if not slug or not featured_img or not title:
+                continue
+                
+            pin_title = f"{title} | 2026 Nail Inspo Lookbook ✨"
+            pin_desc = f"Explore trending nail inspiration for {title}! Tap visit to see all {image_count} HD photos, color codes, and gel shades! 💅 #nailart #nails #nailinspo #manicure"
+            
+            cursor.execute("""
+                INSERT OR IGNORE INTO nail_tutorials (
+                    tutorial_id, slug, title, category, source_site, source_url,
+                    featured_image, all_images_json, image_count, tutorial_steps_json,
+                    pinterest_title, pinterest_description, pinterest_tags_json,
+                    is_posted, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+            """, (
+                tutorial_id,
+                slug,
+                title,
+                "Aesthetic Nail Art",
+                c.get("source_site", "GlamNails Studio"),
+                c.get("source_url", ""),
+                featured_img,
+                json.dumps(images),
+                image_count,
+                json.dumps([]),
+                pin_title,
+                pin_desc,
+                json.dumps(["#nailart", "#nails", "#nailinspo", "#manicure", "#diynails"]),
+                now
+            ))
+            inserted += 1
+    except Exception as e:
+        print(f"[-] Error loading clean collections: {e}")
+        
     conn.commit()
     conn.close()
     return inserted

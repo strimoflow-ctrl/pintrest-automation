@@ -27,9 +27,12 @@ __pycache__/
 
 # Distribution / packaging
 build/
-dist/
 *.egg-info/
 *.zip
+
+# Node modules
+node_modules/
+glamnails_site/node_modules/
 
 # OS & Log files
 .DS_Store

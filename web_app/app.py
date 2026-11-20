@@ -30,21 +30,21 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 async def background_pin_poster():
     """
     Automated Background Worker:
-    - Waits 30 seconds on server start
-    - Posts the next unposted nail tutorial with high-converting banner to Pinterest
-    - Repeats every POST_INTERVAL_MINUTES (default 35 mins)
+    - Waits 5 seconds after server boot/restart
+    - Immediately posts 1 fresh nail pin to Pinterest for instant verification
+    - Then continues posting on schedule every POST_INTERVAL_MINUTES (default 35 mins)
     """
-    await asyncio.sleep(20)
-    print("\n[🚀] GlamNails Automated Pinterest Worker Activated!")
+    await asyncio.sleep(5)
+    print("\n[🚀] Server boot/restart detected! Immediately posting first pin for instant test...")
     
     interval_seconds = max(config.POST_INTERVAL_MINUTES * 60, 600)
     
     while True:
         try:
-            print(f"[*] Checking queue for next nail tutorial to post...")
+            print(f"[*] Posting nail tutorial to Pinterest...")
             success = nail_engine.post_next_nail_pin()
             if success:
-                print(f"[✓] Pin successfully posted! Next post in {config.POST_INTERVAL_MINUTES} minutes.")
+                print(f"[✓] Pin successfully posted! Next scheduled post in {config.POST_INTERVAL_MINUTES} minutes.")
             else:
                 print(f"[!] No pin was posted. Will check again in {config.POST_INTERVAL_MINUTES} minutes.")
         except Exception as e:

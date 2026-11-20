@@ -1,22 +1,22 @@
-import os
 import sys
+import asyncio
 from pathlib import Path
 from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-# Add parent directory to sys.path so we can import config & database
+# Add project root to sys.path
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR))
 
 import config
 import database
-import firebase_db
+import nail_engine
 
-app = FastAPI(title="NOX PFP Landing & Monetag Hub")
+app = FastAPI(title="GlamNails DIY & Monetag Hub")
 
 # Mount static and media directories
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -27,228 +27,78 @@ app.mount("/media", StaticFiles(directory=str(config.MEDIA_DIR)), name="media")
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
-async def background_automation_loop():
+async def background_pin_poster():
     """
-    Background worker that runs inside Botkeep:
-    - Auto-posts pins to Pinterest at safe intervals (every 35 mins)
-    - Automatically scrapes new wallpapers from Nox_oo1 when queue gets low
-    - Sends Telegram notification on each post
+    Automated Background Worker:
+    - Waits 30 seconds on server start
+    - Posts the next unposted nail tutorial with high-converting banner to Pinterest
+    - Repeats every POST_INTERVAL_MINUTES (default 35 mins)
     """
-    import asyncio
-    from pinterest_poster import post_single_item
-    from telegram_scraper import scrape_telegram_web
+    await asyncio.sleep(20)
+    print("\n[🚀] GlamNails Automated Pinterest Worker Activated!")
     
-    # Wait 15 seconds after server boot
-    await asyncio.sleep(15)
-    print("[*] Botkeep Automation Background Worker Active!")
+    interval_seconds = max(config.POST_INTERVAL_MINUTES * 60, 600)
     
     while True:
         try:
-            item = database.get_next_unposted_item()
-            if item:
-                print(f"[*] Auto-posting queued item #{item['id']} to Pinterest...")
-                post_single_item(item)
+            print(f"[*] Checking queue for next nail tutorial to post...")
+            success = nail_engine.post_next_nail_pin()
+            if success:
+                print(f"[✓] Pin successfully posted! Next post in {config.POST_INTERVAL_MINUTES} minutes.")
             else:
-                print("[*] Queue empty. Auto-scraping new batch from Telegram...")
-                scrape_telegram_web(max_items=25)
-                # Post first pin immediately from newly scraped batch
-                fresh_item = database.get_next_unposted_item()
-                if fresh_item:
-                    print(f"[*] Posting fresh item #{fresh_item['id']} to Pinterest immediately...")
-                    post_single_item(fresh_item)
+                print(f"[!] No pin was posted. Will check again in {config.POST_INTERVAL_MINUTES} minutes.")
         except Exception as e:
             print(f"[-] Background worker error: {e}")
             
-        sleep_secs = max(config.POST_INTERVAL_MINUTES * 60, 600)
-        print(f"[*] Sleeping {config.POST_INTERVAL_MINUTES} minutes until next scheduled pin...")
-        await asyncio.sleep(sleep_secs)
-
-async def viral_background_loop():
-    """
-    Background worker that runs inside Render:
-    - Automatically checks and ensures 4 target boards on new Pinterest account
-    - Scrapes fresh viral images on-demand from source boards
-    - Auto-posts pins with 5-click video player landing URLs
-    - Sends notifications to the same Telegram bot!
-    """
-    import asyncio
-    from viral_engine import PinterestViralClient, post_next_viral_pin, scrape_fresh_viral_batch
-    from notifier import send_telegram_notification
-    
-    await asyncio.sleep(25)
-    print("[*] Viral 18+ Clickbait Background Worker Active!")
-    
-    session_cookie = config.VIRAL_PINTEREST_SESSION
-    username = config.VIRAL_PINTEREST_USERNAME
-    
-    if not session_cookie:
-        print("[-] VIRAL_PINTEREST_SESSION is not configured in .env. Viral worker waiting...")
-        return
-        
-    poster = PinterestViralClient(session_cookie, username)
-    loop = asyncio.get_event_loop()
-    
-    try:
-        board_ids = await loop.run_in_executor(None, poster.ensure_viral_boards)
-        print(f"[✓] Viral Worker Boards Pool: {board_ids}")
-        send_telegram_notification(
-            "🚀 <b>Viral 18+ Pinterest Bot Connected!</b>\n\n"
-            f"🎯 <b>Status:</b> Active on Render Server\n"
-            f"📁 <b>Target Boards:</b> {len(board_ids)} Boards Active\n"
-            f"⚡ <i>Auto-posting with 5-Click Video Player Gate every {config.VIRAL_POST_INTERVAL_MINUTES}m</i>"
-        )
-    except Exception as e:
-        print(f"[-] Viral worker board init error: {e}")
-        board_ids = []
-        
-    while True:
-        try:
-            next_item = database.get_next_unposted_viral_item()
-            if not next_item:
-                print("[*] Viral queue empty. Live scraping fresh batch...")
-                await loop.run_in_executor(None, scrape_fresh_viral_batch, 10)
-                
-            next_item = database.get_next_unposted_viral_item()
-            if next_item and board_ids:
-                print(f"[*] Auto-posting Viral Pin #{next_item['id']} to Pinterest...")
-                await loop.run_in_executor(None, post_next_viral_pin, poster, board_ids)
-            elif not board_ids:
-                board_ids = await loop.run_in_executor(None, poster.ensure_viral_boards)
-        except Exception as e:
-            print(f"[-] Viral background loop error: {e}")
-            
-        sleep_secs = max(config.VIRAL_POST_INTERVAL_MINUTES * 60, 600)
-        print(f"[*] Viral worker sleeping {config.VIRAL_POST_INTERVAL_MINUTES} mins until next pin...")
-        await asyncio.sleep(sleep_secs)
+        await asyncio.sleep(interval_seconds)
 
 @app.on_event("startup")
-def startup_event():
-    import asyncio
-    database.init_db()
-    asyncio.create_task(background_automation_loop())
-    asyncio.create_task(viral_background_loop())
-
-# ================= UPTIME PING & HEALTH CHECK =================
-@app.head("/")
-async def head_root():
-    """Handles HEAD requests for Uptime monitors (UptimeRobot, BetterUptime, etc.)"""
-    return HTMLResponse(content="", status_code=200)
+async def on_startup():
+    # Initialize DB and populate 641 tutorials from JSON catalogs if first run
+    print("[*] Initializing Nail Tutorials Database...")
+    inserted = database.populate_catalogs_if_empty()
+    stats = database.get_stats()
+    print(f"[✓] Database ready: {stats['total_tutorials']} tutorials loaded ({stats['posted_pins']} posted)")
+    
+    # Start auto-posting loop as non-blocking background task
+    asyncio.create_task(background_pin_poster())
 
 @app.get("/sw.js")
-async def service_worker():
-    """Serves Monetag Push Notification Service Worker at root /sw.js"""
+async def get_service_worker():
+    """Serves the Monetag push notifications service worker."""
     sw_file = BASE_DIR / "sw.js"
     if sw_file.exists():
-        return FileResponse(
-            path=str(sw_file),
-            media_type="application/javascript",
-            headers={"Service-Worker-Allowed": "/"}
-        )
-    raise HTTPException(status_code=404, detail="sw.js not found")
-
-@app.get("/health")
-@app.head("/health")
-async def health_check():
-    """Health check endpoint to keep Render server awake 24/7"""
-    stats = database.get_stats()
-    return {
-        "status": "healthy",
-        "service": "NOX PFP Pinterest Automation",
-        "stats": stats
-    }
+        return FileResponse(str(sw_file), media_type="application/javascript")
+    raise HTTPException(status_code=404, detail="Service worker not found")
 
 @app.get("/", response_class=HTMLResponse)
-async def index_page(request: Request):
-    """
-    Lightweight branded status page for Cryvex Automation.
-    Zero image bandwidth, zero heavy queries!
-    """
-    return templates.TemplateResponse(request, "index.html", {
-        "year": datetime.now().year
-    })
-
-@app.get("/p/{item_id}", response_class=HTMLResponse)
-async def view_pin_page(request: Request, item_id: int):
-    # Guaranteed Zero-404: Resolves from SQLite, Firebase posted_pins, or high-res aesthetic fallback
-    item = database.get_safe_pin_item(item_id)
-        
-    # Increment views counter locally and in Firebase
-    try:
-        database.increment_views(item_id)
-        firebase_db.increment_firebase_views()
-    except Exception:
-        pass
-    
-    return templates.TemplateResponse(request, "pin_view.html", {
-        "item": item,
-        "site_url": config.SITE_BASE_URL,
-        "timer_seconds": config.TIMER_SECONDS,
-        "monetag_direct_link": config.MONETAG_DIRECT_LINK,
+async def home(request: Request):
+    """Homepage gallery of trending nail tutorials."""
+    tutorials = database.get_recent_tutorials(limit=36)
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "tutorials": tutorials,
         "monetag_script_tag": config.MONETAG_SCRIPT_TAG,
-        "now_year": datetime.now().year
+        "monetag_direct_link": config.MONETAG_DIRECT_LINK
     })
 
-# =============================================================
-# VIRAL BOT 2 (18+ VIDEO PLAYER WITH 5-CLICK UNLOCK)
-# =============================================================
-@app.get("/v/{item_id}", response_class=HTMLResponse)
-async def view_viral_video_gate(request: Request, item_id: int):
-    # Guaranteed Zero-404: Resolves from viral table, media table, or high-res fallback
-    item = database.get_safe_viral_item(item_id)
-
-    try:
-        database.increment_viral_views(item_id)
-    except Exception:
-        pass
+@app.get("/nail/{slug}", response_class=HTMLResponse)
+async def view_nail_tutorial(request: Request, slug: str):
+    """Destination landing page for Pinterest pins."""
+    tutorial = database.get_tutorial_by_slug(slug)
+    if not tutorial:
+        raise HTTPException(status_code=404, detail="Nail tutorial not found")
+        
+    database.increment_views(slug)
     
-    return templates.TemplateResponse(request, "video_gate.html", {
-        "item": item,
-        "site_url": config.SITE_BASE_URL,
-        "max_clicks": config.VIRAL_UNLOCK_CLICKS,
-        "monetag_direct_link": config.MONETAG_DIRECT_LINK,
-        "telegram_redirect_bot": config.TELEGRAM_REDIRECT_BOT,
-        "monetag_script_tag": config.MONETAG_SCRIPT_TAG
+    return templates.TemplateResponse("article.html", {
+        "request": request,
+        "tutorial": tutorial,
+        "monetag_script_tag": config.MONETAG_SCRIPT_TAG,
+        "monetag_direct_link": config.MONETAG_DIRECT_LINK
     })
-
-@app.post("/api/viral/{item_id}/click")
-async def record_viral_click(item_id: int):
-    database.increment_viral_unlocks(item_id)
-    return {"success": True}
-
-@app.get("/api/viral/stats")
-async def api_viral_stats():
-    return database.get_viral_stats()
-
-@app.get("/download/{item_id}")
-async def download_media(item_id: int):
-    item = database.get_safe_pin_item(item_id)
-
-    # Increment downloads counter locally and in Firebase
-    try:
-        database.increment_downloads(item_id)
-        firebase_db.increment_firebase_downloads()
-    except Exception:
-        pass
-
-    if item.get("file_path"):
-        file_path = config.MEDIA_DIR / item["file_path"]
-        if file_path.exists():
-            return FileResponse(
-                path=str(file_path),
-                filename=item.get("original_filename") or file_path.name,
-                media_type="application/octet-stream"
-            )
-
-    if item.get("cdn_url") and str(item["cdn_url"]).startswith("http"):
-        return RedirectResponse(url=item["cdn_url"])
-
-    # High-speed aesthetic wallpaper download fallback
-    return RedirectResponse(url="https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1200&auto=format&fit=crop")
 
 @app.get("/api/stats")
-async def api_stats():
-    return database.get_stats()
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+async def get_stats():
+    """Returns database status and stats."""
+    return JSONResponse(database.get_stats())

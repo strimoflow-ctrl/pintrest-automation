@@ -1,0 +1,38 @@
+{
+  "total_sites": 5,
+  "total_tutorials_cataloged": 641,
+  "total_hd_images_indexed": 14743,
+  "elapsed_seconds": 151.65,
+  "sites_summary": [
+    {
+      "site": "The Pink Issue",
+      "file": "C:\\Users\\cryvex\\Desktop\\Mini App\\pinterest_automation\\nail_catalogs\\the_pink_issue_catalog.json",
+      "posts": 350,
+      "images": 10762
+    },
+    {
+      "site": "NailArk",
+      "file": "C:\\Users\\cryvex\\Desktop\\Mini App\\pinterest_automation\\nail_catalogs\\nailark_catalog.json",
+      "posts": 95,
+      "images": 525
+    },
+    {
+      "site": "The Nail Blooms",
+      "file": "C:\\Users\\cryvex\\Desktop\\Mini App\\pinterest_automation\\nail_catalogs\\the_nail_blooms_catalog.json",
+      "posts": 68,
+      "images": 2034
+    },
+    {
+      "site": "Styvea",
+      "file": "C:\\Users\\cryvex\\Desktop\\Mini App\\pinterest_automation\\nail_catalogs\\styvea_catalog.json",
+      "posts": 119,
+      "images": 1394
+    },
+    {
+      "site": "Naillie",
+      "file": "C:\\Users\\cryvex\\Desktop\\Mini App\\pinterest_automation\\nail_catalogs\\naillie_catalog.json",
+      "posts": 9,
+      "images": 28
+    }
+  ]
+}

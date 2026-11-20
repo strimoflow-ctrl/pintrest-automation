@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ tutorial.title }} | Step-by-Step DIY Tutorial</title>
+
+  <!-- OpenGraph Social Meta -->
+  <meta name="description" content="{{ tutorial.pinterest_description }}">
+  <meta property="og:title" content="{{ tutorial.title }}">
+  <meta property="og:description" content="{{ tutorial.pinterest_description }}">
+  <meta property="og:image" content="{{ tutorial.featured_image }}">
+  <meta property="og:type" content="article">
+  <meta name="theme-color" content="#1a0b14">
+
+  <link rel="stylesheet" href="/static/style.css">
+
+  <!-- ================= MONETAG OFFICIAL SCRIPT TAG ================= -->
+  {{ monetag_script_tag | safe }}
+
+</head>
+<body>
+
+  <!-- Top Luxury Navbar -->
+  <nav class="navbar">
+    <a href="/" class="brand-logo">
+      <span>💅</span> GLAM<span class="highlight">NAILS</span>
+    </a>
+    <span class="brand-tag">✨ DIY Studio</span>
+  </nav>
+
+  <main class="container">
+    
+    <!-- Article Header -->
+    <header class="article-header">
+      <div class="category-pill">{{ tutorial.category or "Aesthetic Nail Art" }}</div>
+      <h1 class="article-title">{{ tutorial.title }}</h1>
+      <div class="article-meta">
+        <span>🕒 5 Min Read</span>
+        <span>💅 DIY Home Manicure</span>
+        <span>📸 {{ tutorial.image_count or (tutorial.all_images | length) }} Photos</span>
+      </div>
+    </header>
+
+    <!-- Main Featured Design Image -->
+    <div class="featured-box">
+      <img src="{{ tutorial.featured_image }}" alt="{{ tutorial.title }}" class="featured-img" loading="eager">
+      <div class="featured-caption">
+        Featured Inspiration: {{ tutorial.title }} • Professional Salon Style at Home
+      </div>
+    </div>
+
+    <!-- Step-by-Step Tutorial Section -->
+    <section class="steps-container">
+      <h2 class="section-title">
+        <span>📖</span> Step-by-Step DIY Instructions
+      </h2>
+
+      {% for step in tutorial.tutorial_steps %}
+        <div class="step-card">
+          <div class="step-number">Step {{ loop.index }}</div>
+          <p class="step-text">{{ step }}</p>
+        </div>
+      {% endfor %}
+    </section>
+
+    <!-- MONETAG HIGH-RPM DIRECT LINK CTA 1 -->
+    <div class="cta-box">
+      <h3 class="cta-heading">🎨 Recommended Color Shades & Polish Kit</h3>
+      <p class="cta-subtext">Click below to view the exact gel shades, brushes, and top coats used in this look:</p>
+      <a href="{{ monetag_direct_link }}" target="_blank" rel="noopener" class="cta-btn">
+        ✨ View Exact Gel Shades & Kit ➔
+      </a>
+    </div>
+
+    <!-- Additional Design Variations / Gallery -->
+    {% if tutorial.all_images and (tutorial.all_images | length) > 1 %}
+    <section class="gallery-container">
+      <h2 class="section-title">
+        <span>✨</span> More Aesthetic Angles & Variations
+      </h2>
+      <div class="gallery-grid">
+        {% for img_url in tutorial.all_images[1:9] %}
+          <div class="gallery-item">
+            <img src="{{ img_url }}" alt="Nail variation" loading="lazy">
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- MONETAG HIGH-RPM DIRECT LINK CTA 2 -->
+    <div class="cta-box" style="margin-top: 3rem;">
+      <h3 class="cta-heading">📥 Download Step-by-Step Printable PDF Guide</h3>
+      <p class="cta-subtext">Save this manicure guide to your phone for your next nail session:</p>
+      <a href="{{ monetag_direct_link }}" target="_blank" rel="noopener" class="cta-btn">
+        💅 Download Free Tutorial Guide (PDF) ➔
+      </a>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <p>© 2026 GlamNails Studio • Luxury Nail Art DIY & Trends</p>
+  </footer>
+
+  <!-- Monetag Push Notification Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .catch(err => console.log('SW Info:', err));
+    }
+  </script>
+
+</body>
+</html>

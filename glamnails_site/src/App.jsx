@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, Sparkles, Image as ImageIcon, ArrowLeft, X, ExternalLink, Heart, Download } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, Sparkles, Image as ImageIcon, ArrowLeft, X, Download } from 'lucide-react';
 import rawData from './data/collections.json';
 
 const MONETAG_DIRECT_LINK = "https://uplcm.com/4/12271752";
@@ -19,7 +19,7 @@ const TAG_FILTERS = [
 export default function App() {
   const collections = rawData.collections || [];
 
-  // Routing state based on window.location.hash
+  // Routing state based on window.location.hash and pathname
   const [currentHash, setCurrentHash] = useState(window.location.hash || '');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState('All Looks');
@@ -104,57 +104,82 @@ export default function App() {
         <div className="brand-title" onClick={goHome}>
           <span>💅</span> GLAM<span style={{ color: 'var(--rose-gold)' }}>NAILS</span>
         </div>
-        <a 
-          href={MONETAG_DIRECT_LINK} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="tag-pill active" 
-          style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-        >
-          <Sparkles size={14} /> 2026 Lookbook
-        </a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <a 
+            href={MONETAG_DIRECT_LINK} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="nav-download-btn"
+            title="Download HD Lookbook PDF"
+          >
+            <Download size={14} /> Download Lookbook
+          </a>
+        </div>
       </nav>
 
       <main className="container animate-fade">
         {selectedCollection ? (
           /* ================= DETAIL LOOKBOOK VIEW ================= */
           <div className="detail-header">
-            <button className="back-btn" onClick={goHome}>
-              <ArrowLeft size={16} /> All Collections
-            </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <button className="back-btn" onClick={goHome}>
+                <ArrowLeft size={16} /> All Collections
+              </button>
 
-            <span className="tag-pill" style={{ display: 'inline-block', marginBottom: '0.75rem' }}>
-              ✨ {selectedCollection.source_site} Collection
-            </span>
-
-            <h1 className="detail-title">{selectedCollection.title}</h1>
-
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', marginBottom: '1.5rem' }}>
-              📸 Showing {selectedCollection.image_count} Salon-Grade HD Nail Art Photos • Tap any photo to zoom in
-            </p>
-
-            {/* Featured Hero Image */}
-            <div className="gallery-photo-card" style={{ maxHeight: '600px', cursor: 'pointer' }} onClick={() => setActiveModalImg(selectedCollection.featured_image)}>
-              <img src={selectedCollection.featured_image} alt={selectedCollection.title} loading="eager" />
-            </div>
-
-            {/* MONETAG HIGH-RPM DIRECT LINK BUTTON 1 */}
-            <div className="monetag-cta-card">
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', marginBottom: '0.4rem' }}>
-                🎨 View Exact Gel Polish Shades & Kit
-              </h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
-                Click below to unlock the exact color codes, builder gels, and brushes used for this look:
-              </p>
-              <a href={MONETAG_DIRECT_LINK} target="_blank" rel="noopener noreferrer" className="cta-btn-main">
-                ✨ Unlock Nail Shades & Polish List ➔
+              <a 
+                href={MONETAG_DIRECT_LINK} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="action-download-pill"
+                title="Save HD Lookbook Photos"
+              >
+                <Download size={14} /> Save All {selectedCollection.image_count} HD Photos
               </a>
             </div>
 
-            {/* Full HD Gallery Grid of all images in collection */}
-            <h2 style={{ fontSize: '1.35rem', fontWeight: 700, margin: '2.5rem 0 1rem 0', color: 'var(--rose-gold)' }}>
-              📸 All {selectedCollection.image_count} Design Angles & Variations
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <span className="tag-pill" style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}>
+                ✨ {selectedCollection.source_site} Collection
+              </span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                {selectedCollection.image_count} HD Photos
+              </span>
+            </div>
+
+            <h1 className="detail-title">{selectedCollection.title}</h1>
+
+            {/* Featured Hero Image with subtle download icon */}
+            <div 
+              className="gallery-photo-card hero-card"
+              onClick={() => setActiveModalImg(selectedCollection.featured_image)}
+            >
+              <img src={selectedCollection.featured_image} alt={selectedCollection.title} loading="eager" />
+              <a 
+                href={MONETAG_DIRECT_LINK} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="img-download-icon" 
+                onClick={e => e.stopPropagation()} 
+                title="Download HD photo"
+              >
+                <Download size={16} />
+              </a>
+            </div>
+
+            {/* Full HD Gallery Grid */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '2.5rem 0 1rem 0' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--rose-gold)' }}>
+                📸 All {selectedCollection.image_count} Design Angles
+              </h2>
+              <a 
+                href={MONETAG_DIRECT_LINK} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="subtle-link"
+              >
+                <Download size={13} /> Save Full Gallery
+              </a>
+            </div>
 
             <div className="detail-gallery">
               {selectedCollection.images.map((imgUrl, idx) => (
@@ -164,24 +189,24 @@ export default function App() {
                   onClick={() => setActiveModalImg(imgUrl)}
                 >
                   <img src={imgUrl} alt={`Design variation #${idx + 1}`} loading="lazy" />
-                  <div style={{ position: 'absolute', bottom: '0.5rem', left: '0.5rem', background: 'rgba(0,0,0,0.7)', padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 700 }}>
+                  
+                  {/* Subtle clean download icon on each image */}
+                  <a 
+                    href={MONETAG_DIRECT_LINK} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="img-download-icon"
+                    onClick={e => e.stopPropagation()}
+                    title="Download HD photo"
+                  >
+                    <Download size={14} />
+                  </a>
+
+                  <div className="photo-idx-badge">
                     #{idx + 1}
                   </div>
                 </div>
               ))}
-            </div>
-
-            {/* MONETAG HIGH-RPM DIRECT LINK BUTTON 2 */}
-            <div className="monetag-cta-card" style={{ marginTop: '3.5rem' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', marginBottom: '0.4rem' }}>
-                📥 Download Full 2026 Nail Lookbook (PDF)
-              </h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
-                Get the printable high-res nail design inspiration booklet directly to your phone:
-              </p>
-              <a href={MONETAG_DIRECT_LINK} target="_blank" rel="noopener noreferrer" className="cta-btn-main">
-                💅 Download Free Nail Lookbook ➔
-              </a>
             </div>
 
           </div>
@@ -218,7 +243,9 @@ export default function App() {
             {/* Count indicator */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
               <span>Showing <strong>{filteredCollections.length}</strong> Genuine Lookbooks</span>
-              <span>✨ 9,950+ HD Photos</span>
+              <a href={MONETAG_DIRECT_LINK} target="_blank" rel="noopener noreferrer" className="subtle-link">
+                <Download size={13} /> 2026 Lookbook (PDF)
+              </a>
             </div>
 
             {/* Cards Grid with Lazy Load */}
@@ -262,35 +289,23 @@ export default function App() {
         )}
       </main>
 
-      {/* Floating Sticky Mobile Ad Bar (100% Mobile Guarantee) */}
-      <div className="sticky-mobile-bar">
-        <a 
-          href={MONETAG_DIRECT_LINK} 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="sticky-cta-btn"
-        >
-          💅 Unlock 2026 Gel Shades & Polish Kit (Free) ➔
-        </a>
-      </div>
-
       {/* Fullscreen Image Lightbox Modal */}
       {activeModalImg && (
         <div className="modal-backdrop" onClick={() => setActiveModalImg(null)}>
           <div className="modal-img-wrap" onClick={e => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setActiveModalImg(null)}>
-              <X size={28} />
+              <X size={26} />
             </button>
             <img src={activeModalImg} alt="Zoomed nail design" className="modal-img" />
-            <div style={{ textAlign: 'center', marginTop: '0.75rem' }}>
+            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
               <a 
                 href={MONETAG_DIRECT_LINK} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="cta-btn-main" 
-                style={{ padding: '0.6rem 1.5rem', fontSize: '0.85rem' }}
+                className="action-download-pill" 
+                style={{ padding: '0.65rem 1.5rem', fontSize: '0.9rem', display: 'inline-flex' }}
               >
-                ✨ View Exact Polish Shade for this Look ➔
+                <Download size={15} /> Save HD Photo
               </a>
             </div>
           </div>

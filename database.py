@@ -12,9 +12,11 @@ def get_db_connection() -> sqlite3.Connection:
     return conn
 
 def init_db():
-    """Initializes the SQLite database with the nail_tutorials schema."""
+    """Initializes SQLite tables for collections and individual image pin queue."""
     conn = get_db_connection()
     cursor = conn.cursor()
+    
+    # Collections table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS nail_tutorials (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,29 +29,40 @@ def init_db():
             featured_image TEXT NOT NULL,
             all_images_json TEXT,
             image_count INTEGER DEFAULT 0,
-            tutorial_steps_json TEXT,
-            pinterest_title TEXT,
-            pinterest_description TEXT,
-            pinterest_tags_json TEXT,
-            is_posted INTEGER DEFAULT 0,
-            pinterest_pin_id TEXT,
-            posted_at TEXT,
             views_count INTEGER DEFAULT 0,
             created_at TEXT
         )
     """)
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_is_posted ON nail_tutorials (is_posted)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_slug ON nail_tutorials (slug)")
+
+    # Per-image pin queue table (every single image is a pin)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS nail_pins_queue (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pin_key TEXT UNIQUE NOT NULL,
+            collection_slug TEXT NOT NULL,
+            collection_title TEXT NOT NULL,
+            image_url TEXT NOT NULL,
+            image_index INTEGER NOT NULL,
+            pin_title TEXT NOT NULL,
+            pin_description TEXT NOT NULL,
+            is_posted INTEGER DEFAULT 0,
+            pinterest_pin_id TEXT,
+            posted_at TEXT
+        )
+    """)
+
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pins_posted ON nail_pins_queue (is_posted)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pins_slug ON nail_pins_queue (collection_slug)")
     conn.commit()
     conn.close()
 
 def populate_catalogs_if_empty():
-    """Loads all genuine nail lookbooks from genuine_nail_collections.json into database."""
+    """Loads all genuine nail lookbooks and queues every image as an individual pin."""
     init_db()
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute("SELECT COUNT(*) FROM nail_tutorials")
+    cursor.execute("SELECT COUNT(*) FROM nail_pins_queue")
     count = cursor.fetchone()[0]
     if count > 0:
         conn.close()
@@ -60,13 +73,15 @@ def populate_catalogs_if_empty():
         conn.close()
         return 0
     
-    inserted = 0
+    inserted_collections = 0
+    inserted_pins = 0
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     
     try:
         with open(clean_json_file, "r", encoding="utf-8") as f:
             data = json.load(f)
         collections = data.get("collections", [])
+        
         for c in collections:
             tutorial_id = c.get("id") or c.get("slug")
             slug = c.get("slug")
@@ -75,19 +90,14 @@ def populate_catalogs_if_empty():
             images = c.get("images", [])
             image_count = c.get("image_count", len(images))
             
-            if not slug or not featured_img or not title:
+            if not slug or not featured_img or not title or len(images) == 0:
                 continue
                 
-            pin_title = f"{title} | 2026 Nail Inspo Lookbook ✨"
-            pin_desc = f"Explore trending nail inspiration for {title}! Tap visit to see all {image_count} HD photos, color codes, and gel shades! 💅 #nailart #nails #nailinspo #manicure"
-            
             cursor.execute("""
                 INSERT OR IGNORE INTO nail_tutorials (
                     tutorial_id, slug, title, category, source_site, source_url,
-                    featured_image, all_images_json, image_count, tutorial_steps_json,
-                    pinterest_title, pinterest_description, pinterest_tags_json,
-                    is_posted, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+                    featured_image, all_images_json, image_count, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 tutorial_id,
                 slug,
@@ -98,26 +108,49 @@ def populate_catalogs_if_empty():
                 featured_img,
                 json.dumps(images),
                 image_count,
-                json.dumps([]),
-                pin_title,
-                pin_desc,
-                json.dumps(["#nailart", "#nails", "#nailinspo", "#manicure", "#diynails"]),
                 now
             ))
-            inserted += 1
+            inserted_collections += 1
+            
+            # Queue EVERY SINGLE IMAGE as an individual pin pointing to this collection!
+            for idx, img_url in enumerate(images):
+                if not img_url or not img_url.startswith("http"):
+                    continue
+                pin_key = f"{slug}_{idx+1}"
+                pin_title = f"{title} • Look #{idx+1} | Aesthetic Nails ✨"
+                pin_desc = (
+                    f"Looking for aesthetic nail inspiration? Check out this stunning {title} (Design #{idx+1}). "
+                    f"Tap visit to view the complete lookbook and all design angles! 💅 #nailart #nails #diynails #nailinspo"
+                )
+                cursor.execute("""
+                    INSERT OR IGNORE INTO nail_pins_queue (
+                        pin_key, collection_slug, collection_title, image_url,
+                        image_index, pin_title, pin_description, is_posted
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+                """, (
+                    pin_key,
+                    slug,
+                    title,
+                    img_url,
+                    idx + 1,
+                    pin_title,
+                    pin_desc
+                ))
+                inserted_pins += 1
+                
     except Exception as e:
-        print(f"[-] Error loading clean collections: {e}")
+        print(f"[-] Error loading collections: {e}")
         
     conn.commit()
     conn.close()
-    return inserted
+    return inserted_pins
 
-def get_next_unposted_tutorial() -> Optional[Dict[str, Any]]:
-    """Fetches the next unposted nail tutorial from the queue."""
+def get_next_unposted_pin() -> Optional[Dict[str, Any]]:
+    """Fetches the next unposted image pin from the queue."""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT * FROM nail_tutorials 
+        SELECT * FROM nail_pins_queue 
         WHERE is_posted = 0 
         ORDER BY id ASC 
         LIMIT 1
@@ -125,28 +158,24 @@ def get_next_unposted_tutorial() -> Optional[Dict[str, Any]]:
     row = cursor.fetchone()
     conn.close()
     if row:
-        d = dict(row)
-        d["all_images"] = json.loads(d.get("all_images_json") or "[]")
-        d["tutorial_steps"] = json.loads(d.get("tutorial_steps_json") or "[]")
-        d["pinterest_tags"] = json.loads(d.get("pinterest_tags_json") or "[]")
-        return d
+        return dict(row)
     return None
 
-def mark_tutorial_posted(tutorial_id: str, pin_id: Optional[str] = None):
-    """Marks a tutorial as posted to Pinterest."""
+def mark_pin_posted(pin_key: str, pinterest_pin_id: Optional[str] = None):
+    """Marks an image pin as posted to Pinterest."""
     conn = get_db_connection()
     cursor = conn.cursor()
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     cursor.execute("""
-        UPDATE nail_tutorials 
+        UPDATE nail_pins_queue 
         SET is_posted = 1, pinterest_pin_id = ?, posted_at = ? 
-        WHERE tutorial_id = ?
-    """, (pin_id, now, tutorial_id))
+        WHERE pin_key = ?
+    """, (pinterest_pin_id, now, pin_key))
     conn.commit()
     conn.close()
 
 def get_tutorial_by_slug(slug: str) -> Optional[Dict[str, Any]]:
-    """Fetches tutorial details by slug for the web app landing page."""
+    """Fetches collection details by slug."""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM nail_tutorials WHERE slug = ?", (slug,))
@@ -154,28 +183,11 @@ def get_tutorial_by_slug(slug: str) -> Optional[Dict[str, Any]]:
     conn.close()
     if row:
         d = dict(row)
-        d["all_images"] = json.loads(d.get("all_images_json") or "[]")
-        d["tutorial_steps"] = json.loads(d.get("tutorial_steps_json") or "[]")
-        d["pinterest_tags"] = json.loads(d.get("pinterest_tags_json") or "[]")
+        d["images"] = json.loads(d.get("all_images_json") or "[]")
         return d
     return None
 
-def get_recent_tutorials(limit: int = 24, offset: int = 0) -> List[Dict[str, Any]]:
-    """Gets list of tutorials for the homepage gallery."""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT id, slug, title, category, featured_image, image_count, views_count, is_posted 
-        FROM nail_tutorials 
-        ORDER BY id ASC 
-        LIMIT ? OFFSET ?
-    """, (limit, offset))
-    rows = cursor.fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
-
 def increment_views(slug: str):
-    """Increments the view count for a tutorial."""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("UPDATE nail_tutorials SET views_count = views_count + 1 WHERE slug = ?", (slug,))
@@ -183,19 +195,19 @@ def increment_views(slug: str):
     conn.close()
 
 def get_stats() -> Dict[str, Any]:
-    """Returns total tutorials, posted count, and unposted count."""
+    """Returns database status and stats."""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM nail_tutorials")
-    total = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM nail_tutorials WHERE is_posted = 1")
-    posted = cursor.fetchone()[0]
-    cursor.execute("SELECT COALESCE(SUM(views_count), 0) FROM nail_tutorials")
-    views = cursor.fetchone()[0]
+    total_collections = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM nail_pins_queue")
+    total_pins = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM nail_pins_queue WHERE is_posted = 1")
+    posted_pins = cursor.fetchone()[0]
     conn.close()
     return {
-        "total_tutorials": total,
-        "posted_pins": posted,
-        "unposted_pins": total - posted,
-        "total_views": views
+        "total_collections": total_collections,
+        "total_pins": total_pins,
+        "posted_pins": posted_pins,
+        "unposted_pins": total_pins - posted_pins
     }
